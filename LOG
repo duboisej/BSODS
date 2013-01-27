@@ -1,5 +1,5 @@
 Sun Jan 27 16:34:53 EST 2013
-Attendees: Eduardo Rivera, Ethan Dubois, Niko Konstantakos
+Attendees: Eduardo Rivas, Ethan Dubois, Niko Konstantakos
 Question: 1) How to use GitHub for version control, 2) What do Makefiles
 mean and how do they work 3) How does branching work in Git
 Decisions: 1) Naming conventions for branches 2) When to make new branches
