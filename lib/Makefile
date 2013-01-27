@@ -1,7 +1,7 @@
 CFLAGS := -g
 targets = libdagame.a
 src = $(wildcard *.c)
-objs = $(pathsubst %.c,%.o$(src))
+objs = $(patsubst %.c,%.o,$(src))
 
 all: $(targets)
 .PHONY : all
