@@ -1,0 +1,13 @@
+Sun Jan 27 16:34:53 EST 2013
+Attendees: Eduardo Rivera, Ethan Dubois, Niko Konstantakos
+Question: 1) How to use GitHub for version control, 2) What do Makefiles
+mean and how do they work 3) How does branching work in Git
+Decisions: 1) Naming conventions for branches 2) When to make new branches
+3) Communication methods for team
+Todo: Problem 6, a-d (reading and research before next meeting- Ethan UNP
+Ch. 3, Niko Ch. 4, Eddie Ch. 5) Finish Problem 6 at next meeting (coding
+part - all)
+Comments/Notes: Finished Problems 1-5. Ran into compiler and Makefile
+problems and traced them to a bug in the lib directory. Talked about
+Git/GitHub and came up with naming conventions/communication methods that
+we will use. Assigned tasks to complete before next meeting.
