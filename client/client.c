@@ -64,15 +64,6 @@ getInput()
 
   //STUDY THIS CODE AND EXPLAIN WHAT IT DOES AND WHY IN YOUR LOG FILE
 
-  // Declares length and char pointer to point to the beginning of the command that is read in.
-  // Zeros the data of the buffer and the newLine variable
-  // Reads in a command from the user and stores it in the globals data buffer (in.data)
-  // Points ret at the beginning of the data in the buffer
-  // Checks to see if a command was actually read in- if so, it keeps track of the length of the data (using len)
-  // Remove a newline from the end of the input if necessary.
-  // Set the global len and return the length of the data.
-
-
   // to make debugging easier we zero the data of the buffer
   bzero(globals.in.data, sizeof(globals.in.data));
   globals.in.newline = 0;
@@ -89,7 +80,7 @@ getInput()
 }
 
 int
-prompt(int menu)
+prompt(int menu) 
 {
   static char MenuString[] = "\n" XSTR(TEAMNAME) "$ ";
   int len;
@@ -119,23 +110,19 @@ doConnect(void)
   VPRINTF("BEGIN: %s\n", globals.in.data);
 
   if (globals.connected==1) {
-    //Add some code here ... probably a useful error message to stderr
-      fprintf(stderr, "Already connected.");
+    fprintf(stderr, "Already connected to server.\n");
   } else {
     // be sure you understand what the next two lines are doing
-    // Removes all colons and replaces with spaces
     for (i=0; i<len; i++) if (globals.in.data[i]==':') globals.in.data[i]=' ';
-
     sscanf(globals.in.data, "%*s %" XSTR(STRLEN) "s %d", globals.server,
 	   &globals.port);
     
     if (strlen(globals.server)==0 || globals.port==0) {
-      //Add some code here ... probably a useful error message to stderr
-      fprintf(stderr, "No server or port name specified.");
+      fprintf(stderr, "Missing server or port.\n");
     } else {
       VPRINTF("connecting to: server=%s port=%d...", 
 	      globals.server, globals.port);
-      if (net_setup_connection(&globals.serverFD, globals.server, globals.port) < 0) {
+      if (net_setup_connection(&globals.serverFD, &globals.server[0], globals.port)<0) {
 	fprintf(stderr, " failed NOT connected server=%s port=%d\n", 
 		globals.server, globals.port);
       } else {
@@ -155,14 +142,7 @@ sendStr(char *str, int fd)
   int len=0, nlen=0;
   char *buf;
   
-  //STUDY THIS FUNCTION AND EXPLAIN IN YOUR LOG FILE WHAT IT DOES AND HOW
-  // Gets the length of the string that was passed in. Then convert it to bigendian format (for network byte purposes).
-  // Sends the (network) length of the string to the server and checks to make sure all bits haven been sent correctly.
-  // Sends the string to the server and checks to make sure that the entire string has been sent correctly.
-  // Creates a buffer of the length of the string and reads in the servers response.
-  // If the response from the server isn't the same as the sent string, then return -1 and free the buffer.
-  // Otherwise, write the server's response out to the console, free the buffer and return 1.
-
+  //STUDY THIS FUNCTION AND EXPAIN IN YOUR LOG FILE WHAT IT DOES AND HOW
 
   len = strlen(str);
   if (len==0) return 1;

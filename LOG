@@ -14,4 +14,35 @@ we will use. Assigned tasks to complete before next meeting.
 
 Tues Jan 29 19:42:35 EST 2013
 Attendees: Eduardo Rivas, Ethan Dubois, Niko Konstantakos
-Questions: 1) 
+Questions: 1) What do each of the skeleton code files do and how? 2)
+Explain the different sections of code with explicit questions 3) How do
+the net.c methods work and what are their purpose?
+Decisions: 1) Created new branch A1. 
+Todo: Debug the executables (finish problem 6) 
+Comments/Notes: Went through the skeleton code line by line to understand
+it. Explained significant parts of the code (below). 
+getInput() (client): bzero zeros the data of the buffer. Then it reads in a
+command from the user and stores it in the data buffer of globals, removing a
+newline if it exists and returning the length of the command.
+sendStr() (client): First, it converts the length of the string (to be
+sent) into a network byte representation (bigendian) and then tries to send
+it to the server via the net_writen method. The net_writen method writes
+the length to the socket and returns the number of bytes written. If this
+number is different than the size of the length (int), an error is printed
+and the method ends. If not, it then goes through the same process for the
+actual string that's being sent, printing an error if the number of bytes
+sent isn't equal to the number of bytes received. Finally, it reads the
+message back into a buffer from the server and displays it. 
+main (server): The net_setup_listen_socket and net_listen methods are
+called to set up the socket and begin listening on the given port. Finally,
+a new thread is created and associated with the "doit()" method, to listen
+for an incoming message from the client.
+
+Wed Jan 30 13:46:39 EST 2013
+Attendees: Ethan DuBois
+Questions: 1) Why are some of the pthread method references undefined? 2)
+What is the cause of "send failed" errors in client? 
+Decisions: none
+Todo: Fix client/server send bug - team
+Comments/Notes: Fixed undefined reference issue by including -lpthread in
+the compile command.
