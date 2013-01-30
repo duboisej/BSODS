@@ -49,13 +49,13 @@ str_echo(int sockfd)
   char *buf;
   
   while (1) {
-    MISSING AND IMPORTANT LINE HERE
+    n = net_readn(sockfd, (int*)len, sizeof(int));
     if (n != sizeof(int)) {
       fprintf(stderr, "%s: ERROR failed to read len: %d!=%d"
 	      " ... closing connection\n", __func__, n, (int)sizeof(int));
       break;
     } 
-    WHAT DOES THE NEXT LINE DO?
+    //WHAT DOES THE NEXT LINE DO?
     len = ntohl(len);
     if (len) {
       buf = (char *)malloc(len);
@@ -93,7 +93,7 @@ main(int argc, char **argv)
 
   bzero(&globals, sizeof(globals));
 
-  if (!HMMM WHAT SHOULD WE DO HERE)) {
+  if (net_setup_listen_socket(NULL, NULL)) {
     fprintf(stderr, "net_setup_listen_socket FAILED!\n");
     exit(-1);
   }
@@ -110,7 +110,7 @@ main(int argc, char **argv)
     if (connfd < 0) {
       fprintf(stderr, "Error: server accept failed (%d)\n", errno);
     } else {
-      EXPLAIN WHAT IS HAPPENING HERE IN YOUR LOG
+      //EXPLAIN WHAT IS HAPPENING HERE IN YOUR LOG
       pthread_create(&tid, NULL, &doit, (void *)connfd);
     }
   }
