@@ -49,7 +49,8 @@ str_echo(int sockfd)
   char *buf;
   
   while (1) {
-    net_readn(sockfd, &n, sizeof(int));
+    //net_readn(sockfd, &len, sizeof(int));
+    n = net_readn(sockfd, &len, sizeof(int));
     if (n != sizeof(int)) {
       fprintf(stderr, "%s: ERROR failed to read len: %d!=%d"
 	      " ... closing connection\n", __func__, n, (int)sizeof(int));
@@ -87,16 +88,12 @@ doit(void *arg)
 int
 main(int argc, char **argv)
 {
-  int listenfd, port=0;
+  int listenfd, port = atoi(argv[1]);
   long connfd;
   pthread_t tid;
-  // if (argc < 1) {
-  //   fprintf(stderr, "Error: no command line arguments\n");
-  // } else {
-  //   fprintf(stdout, "Port number %d", argv[0]);
-  // }
+  
   bzero(&globals, sizeof(globals));
-
+  printf("Port number passed in: %d\n", port);
   if (net_setup_listen_socket(&listenfd, &port) < 0) {
     fprintf(stderr, "net_setup_listen_socket FAILED!\n");
     exit(-1);
