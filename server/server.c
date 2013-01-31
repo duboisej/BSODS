@@ -49,7 +49,6 @@ str_echo(int sockfd)
   char *buf;
   
   while (1) {
-    //net_readn(sockfd, &len, sizeof(int));
     n = net_readn(sockfd, &len, sizeof(int));
     if (n != sizeof(int)) {
       fprintf(stderr, "%s: ERROR failed to read len: %d!=%d"
@@ -93,7 +92,6 @@ main(int argc, char **argv)
   pthread_t tid;
   
   bzero(&globals, sizeof(globals));
-  printf("Port number passed in: %d\n", port);
   if (net_setup_listen_socket(&listenfd, &port) < 0) {
     fprintf(stderr, "net_setup_listen_socket FAILED!\n");
     exit(-1);
