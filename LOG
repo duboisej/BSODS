@@ -50,5 +50,5 @@ the compile command.
 Wed Jan 30 19:00:00 EST 2013
 Attendees: Ethan DuBois, Niko Konstantakos, Eddie Rivas
 Questions: 1)What is the cause of "send failed" errors in client? 
-Decisions: none
+Decisions: 1)Ran all tests from readme.txt on our client/server executables, they all seemingly worked.
 Comments/Notes: Fixed "send failed" issue and added support for command line arguments (port number).
