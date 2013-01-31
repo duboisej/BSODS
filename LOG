@@ -46,3 +46,9 @@ Decisions: none
 Todo: Fix client/server send bug - team
 Comments/Notes: Fixed undefined reference issue by including -lpthread in
 the compile command.
+
+Wed Jan 30 19:00:00 EST 2013
+Attendees: Ethan DuBois, Niko Konstantakos, Eddie Rivas
+Questions: 1)What is the cause of "send failed" errors in client? 
+Decisions: none
+Comments/Notes: Fixed "send failed" issue and added support for command line arguments (port number).
