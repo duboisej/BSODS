@@ -210,9 +210,10 @@ net_readn(FDType fd, void *vptr, size_t n)
 	return(-1);
     } else if (nread == 0)
       break;                          /* EOF */
-
+    //fprintf(stdout, "nleft = %d\n ptr = %p\n", nleft, ptr);
     nleft -= nread;
     ptr += nread;
+    //fprintf(stdout, "nleft = %d\n ptr = %p\n", nleft, ptr);
   }
   return(n - nleft);              /* return >= 0 */
 }
