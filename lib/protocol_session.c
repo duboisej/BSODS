@@ -76,55 +76,66 @@ proto_session_hdr_unmarshall_sver(Proto_Session *s, Proto_StateVersion *v)
   v->raw = ntohll(s->rhdr.sver.raw);
 }
 
-static void
+static void // Changed 
 proto_session_hdr_marshall_pstate(Proto_Session *s, Proto_Player_State *ps)
 {
-    s->shdr.pstate.v0.raw  = htonl(ps->v0.raw);
-  ADD CODE 
+    s->shdr.pstate.v0.raw = htonl(ps->v0.raw);
+
+    // changed
+    s->shdr.pstate.v1.raw = htonl(ps->v1.raw);
+    s->shdr.pstate.v2.raw = htonl(ps->v2.raw);
+    s->shdr.pstate.v3.raw = htonl(ps->v3.raw);
 
 }
 
-static void
+static void // changed
 proto_session_hdr_unmarshall_pstate(Proto_Session *s, Proto_Player_State *ps)
 {
-  ADD CODE 
+    ps->v0.raw = ntohl(s->rhdr.pstate.v0.raw);
+    ps->v1.raw = ntohl(s->rhdr.pstate.v1.raw);
+    ps->v2.raw = ntohl(s->rhdr.pstate.v2.raw);
+    ps->v3.raw = ntohl(s->rhdr.pstate.v3.raw);
 
 }
 
-static void
+static void // changed
 proto_session_hdr_marshall_gstate(Proto_Session *s, Proto_Game_State *gs)
 {
-  ADD CODE 
+  s->shdr.gstate.v0.raw = htonl(gs->v0.raw);
+  s->shdr.gstate.v1.raw = htonl(gs->v1.raw);
+  s->shdr.gstate.v2.raw = htonl(gs->v2.raw);
 }
 
-static void
+static void // changed
 proto_session_hdr_unmarshall_gstate(Proto_Session *s, Proto_Game_State *gs)
 {
-  ADD CODE 
+  gs->v0.raw = ntohl(s->rhdr.gstate.v0.raw);
+  gs->v1.raw = ntohl(s->rhdr.gstate.v1.raw);
+  gs->v2.raw = ntohl(s->rhdr.gstate.v2.raw);
 }
 
-static int
+static int // changed
 proto_session_hdr_unmarshall_blen(Proto_Session *s)
 {
-  ADD CODE 
+  return ntohl(s->rhdr.blen);
 }
 
-static void
+static void // changed
 proto_session_hdr_marshall_type(Proto_Session *s, Proto_Msg_Types t)
 {
-  ADD CODE 
+  s->shdr.type = htonl(t);
 }
 
-static int
-proto_session_hdr_unmarshall_version(Proto_Session *s)
-{
-  ADD CODE 
-}
-
-extern Proto_Msg_Types
+extern Proto_Msg_Types // changed
 proto_session_hdr_unmarshall_type(Proto_Session *s)
 {
-  ADD CODE 
+  return ntohl(s->rhdr.type);
+}
+
+static int // changed
+proto_session_hdr_unmarshall_version(Proto_Session *s)
+{
+  return ntohll(s->rhdr.version);
 }
 
 extern void
@@ -270,7 +281,8 @@ proto_session_send_msg(Proto_Session *s, int reset)
   s->shdr.blen = htonl(s->slen);
 
   // write request
-  ADD CODE
+  // changed
+  net_writen(s->fd, s->sbuf, s->shdr.blen);
   
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_send_msg: SENT:\n", pthread_self());
@@ -290,7 +302,11 @@ proto_session_rcv_msg(Proto_Session *s)
   proto_session_reset_receive(s);
 
   // read reply
-  ADD CODE
+  // changed
+
+  //s->shdr.blen = ntohl(s->rlen);
+
+  net_readn(s->fd, s->rbuf, s->shdr.blen);
 
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
@@ -304,7 +320,7 @@ proto_session_rpc(Proto_Session *s)
 {
   int rc;
   
-  ADD CODE
+  //ADD CODE
 
   return rc;
 }
