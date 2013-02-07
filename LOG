@@ -52,3 +52,14 @@ Attendees: Ethan DuBois, Niko Konstantakos, Eddie Rivas
 Questions: 1)What is the cause of "send failed" errors in client? 
 Decisions: 1)Ran all tests from readme.txt on our client/server executables, they all seemingly worked.
 Comments/Notes: Fixed "send failed" issue and added support for command line arguments (port number).
+
+
+Thu Feb  7 13:27:33 EST 2013
+Attendees: Ethan DuBois, Niko Konstantakos, Eddie Rivas
+Questions:
+	1) What are our goals for the new assignment?
+	2) How do we begin tackling on the tasks?
+Decisions:
+	1)
+Comments/Notes:
+	
