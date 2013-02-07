@@ -60,6 +60,6 @@ Questions:
 	1) What are our goals for the new assignment?
 	2) How do we begin tackling on the tasks?
 Decisions:
-	1)
+	1) Started by working through the protocol_session.c. Finished all prototype methods except RPC.
 Comments/Notes:
-	
+	We're still trying to understand how all the pieces got together, but by looking through the already written marshalling methods we were able to unfold all the other ones. The rpc method is still a mystery to us, but we haven't worked through the server and client protocols, so we're not sure what kind of rpc's we'll be making. We feel we made pretty good progress for day 1.
