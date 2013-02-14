@@ -63,3 +63,14 @@ Decisions:
 	1) Started by working through the protocol_session.c. Finished all prototype methods except RPC.
 Comments/Notes:
 	We're still trying to understand how all the pieces got together, but by looking through the already written marshalling methods we were able to unfold all the other ones. The rpc method is still a mystery to us, but we haven't worked through the server and client protocols, so we're not sure what kind of rpc's we'll be making. We feel we made pretty good progress for day 1.
+
+Thu Feb 14 15:59:45 EST 2013
+Attendees: Ethan DuBois, Niko Konstantakos, Eddie Rivas
+Questions:
+	1) What are RPC's? 
+	2) How do we begin connecting the client and server?
+Decisions:
+	1) Use NYI() to keep track of which methods we've implemented 
+	2) Use JoinMe for future team meetings, to facilitate better communication.
+Comments/Notes:
+	We implemented the NYI() function and got the whole thing compiling. We then began implementing methods based on the lines where NYI() was called. We made changes and managed to initialize the client and server, get them to connect, and to start handling/dispatching events. 

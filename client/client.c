@@ -252,7 +252,9 @@ main(int argc, char **argv)
   if (clientInit(&c) < 0) {
     fprintf(stderr, "ERROR: clientInit failed\n");
     return -1;
-  }    
+  } 
+
+  printf("Finished client_init"); 
 
   // ok startup our connection to the server
   if (startConnection(&c, globals.host, globals.port, update_event_handler)<0) {
