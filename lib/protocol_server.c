@@ -99,18 +99,18 @@
               if (Proto_Server.EventLastSubscriber < PROTO_SERVER_MAX_EVENT_SUBSCRIBERS
                   && Proto_Server.EventSubscribers[Proto_Server.EventLastSubscriber]
                   ==-1) {
-                Proto_Server.EventSubscribers[Proto_Server.EventLastSubscriber] = 1;
-                *num = Proto_Server.EventLastSubscriber;
-                Proto_Server.EventLastSubscriber++;
-                Proto_Server.EventNumSubscribers++;
+                Proto_Server.EventSubscribers[Proto_Server.EventLastSubscriber] = 1; // changed
+                *num = Proto_Server.EventLastSubscriber;// changed
+                Proto_Server.EventLastSubscriber++;// changed
+                Proto_Server.EventNumSubscribers++;// changed
                 rc = 1;
               } else {
                 int i;
                 for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
                   if (Proto_Server.EventSubscribers[i]==-1) {
-            	   Proto_Server.EventSubscribers[i] = 1;  
-            	   *num=i;
-                   Proto_Server.EventNumSubscribers++;
+            	   Proto_Server.EventSubscribers[i] = 1;  // changed
+            	   *num=i; // changed
+                   Proto_Server.EventNumSubscribers++; // changed
             	   rc=1;
                   }
                 }
