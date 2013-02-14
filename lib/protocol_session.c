@@ -26,11 +26,14 @@
 #include <strings.h>
 #include <errno.h>
 #include <pthread.h>
+#include <assert.h>
 
 #include "net.h"
 #include "protocol.h"
 #include "protocol_utils.h"
 #include "protocol_session.h"
+
+#define NYI() assert(0)
 
 extern void
 proto_session_dump(Proto_Session *s)
@@ -316,12 +319,13 @@ proto_session_rcv_msg(Proto_Session *s)
 }
 
 extern int
-proto_session_rpc(Proto_Session *s)
+proto_session_rpc(Proto_Session *s) 
 {
-  int rc;
+  // int rc;
   
-  //ADD CODE
+  // //ADD CODE
 
-  return rc;
+  // return rc;
+  NYI();
 }
 

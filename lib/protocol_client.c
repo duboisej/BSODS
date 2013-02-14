@@ -26,10 +26,13 @@
 #include <strings.h>
 #include <errno.h>
 #include <pthread.h>
+#include <assert.h>
 
 #include "protocol.h"
 #include "protocol_utils.h"
 #include "protocol_client.h"
+
+#define NYI() assert(0)
 
 
 typedef struct {
@@ -67,17 +70,20 @@ extern int
 proto_client_set_event_handler(Proto_Client_Handle ch, Proto_Msg_Types mt,
 			       Proto_MT_Handler h)
 {
-  int i;
-  Proto_Client *c = ch;
 
-  if (mt>PROTO_MT_EVENT_BASE_RESERVED_FIRST && 
-      mt<PROTO_MT_EVENT_BASE_RESERVED_LAST) {
-    i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST - 1;
-    ADD CODE
-    return 1;
-  } else {
-    return -1;
-  }
+  NYI();
+  // int i;
+  // Proto_Client *c = ch;
+
+  // if (mt>PROTO_MT_EVENT_BASE_RESERVED_FIRST && 
+  //     mt<PROTO_MT_EVENT_BASE_RESERVED_LAST) {
+  //   i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST - 1;
+  //   ADD CODE
+  //   return 1;
+  // } else {
+  //   return -1;
+  // }
+  return -1;
 }
 
 static int 
@@ -101,6 +107,7 @@ proto_client_event_null_handler(Proto_Session *s)
 static void *
 proto_client_event_dispatcher(void * arg)
 {
+  //NYI();
   Proto_Client *c;
   Proto_Session *s;
   Proto_Msg_Types mt;
@@ -109,19 +116,19 @@ proto_client_event_dispatcher(void * arg)
 
   pthread_detach(pthread_self());
 
-  c = ADD CODE
-  s = ADD CODE
+  //c = arg; // changed
+  //s = c.event_session;// changed
 
   for (;;) {
     if (proto_session_rcv_msg(s)==1) {
       mt = proto_session_hdr_unmarshall_type(s);
       if (mt > PROTO_MT_EVENT_BASE_RESERVED_FIRST && 
 	  mt < PROTO_MT_EVENT_BASE_RESERVED_LAST) {
-	ADD CODE
+	   // // changed - pthread_create(c.base_event_handlers[mt] ? 
 	if (hdlr(s)<0) goto leave;
       }
     } else {
-      ADD CODE
+      //ADD CODE
       goto leave;
     }
   }
@@ -133,6 +140,7 @@ proto_client_event_dispatcher(void * arg)
 extern int
 proto_client_init(Proto_Client_Handle *ch)
 {
+  //NYI();
   Proto_Msg_Types mt;
   Proto_Client *c;
  
@@ -145,7 +153,7 @@ proto_client_init(Proto_Client_Handle *ch)
 
   for (mt=PROTO_MT_EVENT_BASE_RESERVED_FIRST+1;
        mt<PROTO_MT_EVENT_BASE_RESERVED_LAST; mt++)
-    ADD CODE
+    c->base_event_handlers[mt] = c->session_lost_handler;
 
   *ch = c;
   return 1;
@@ -187,23 +195,26 @@ marshall_mtonly(Proto_Session *s, Proto_Msg_Types mt) {
 static int 
 do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
 {
-  int rc;
-  Proto_Session *s;
-  Proto_Client *c = ch;
 
-  s = ADD CODE
-  // marshall
+  NYI();
+  // int rc;
+  // Proto_Session *s;
+  // Proto_Client *c = ch;
 
-  marshall_mtonly(s, mt);
-  rc = proto_session_ADD CODE
+  // s = ADD CODE
+  // // marshall
 
-  if (rc==1) {
-    proto_session_body_unmarshall_int(s, 0, &rc);
-  } else {
-    ADD CODE
-  }
+  // marshall_mtonly(s, mt);
+  // rc = proto_session_ADD CODE
+
+  // if (rc==1) {
+  //   proto_session_body_unmarshall_int(s, 0, &rc);
+  // } else {
+  //   ADD CODE
+  // }
   
-  return rc;
+  // return rc;
+  return -1;
 }
 extern int 
 proto_client_hello(Proto_Client_Handle ch)

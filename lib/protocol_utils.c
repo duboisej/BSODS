@@ -29,7 +29,6 @@
 #include "protocol.h"
 #include "protocol_utils.h"
 
-
 int PROTO_DEBUG=0;
 
 extern void
