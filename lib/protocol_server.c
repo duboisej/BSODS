@@ -190,35 +190,46 @@
             static void *
             proto_server_req_dispatcher(void * arg)
             {
-              NYI();
-             //  Proto_Session s;
-             //  Proto_Msg_Types mt;
-             //  Proto_MT_Handler hdlr;
-             //  int i;
-             //  unsigned long arg_value = (unsigned long) arg;
-              
-             //  pthread_detach(pthread_self());
+              printf("Got into method.");
+              //NYI();
+              Proto_Session s;
+              Proto_Msg_Types mt;
+              Proto_MT_Handler hdlr;
+              int i;
+              unsigned long arg_value = (unsigned long) arg;
+              //fprintf(stderr, "Top of method.");
+              pthread_detach(pthread_self());
 
-             //  proto_session_init(&s);
+              //fprintf(stdout, "Detached thread.");
+              proto_session_init(&s);
+              //printf("Initialized session.");
+              s.fd = (FDType) arg_value;
+              //fprintf(stderr, "got here!!!");
+              fprintf(stderr, "proto_rpc_dispatcher: %p: Started: fd=%d\n", 
+            	  pthread_self(), s.fd);
 
-             //  s.fd = (FDType) arg_value;
+              //fprintf(stderr, "got here.");
 
-             //  fprintf(stderr, "proto_rpc_dispatcher: %p: Started: fd=%d\n", 
-            	//   pthread_self(), s.fd);
-
-             //  for (;;) {
-             //    if (proto_session_rcv_msg(&s)==1) {
-             //      ADD CODE
-            	// if (hdlr(&s)<0) goto leave;
-             //      }
-             //    } else {
-             //      goto leave;
-             //    }
-             //  }
-             // leave:
-             //  Proto_Server.ADD CODE
-             //  close(s.fd);
-             //  return NULL;
+              for (;;) {
+                //fprintf(stderr, "got here");
+                if (proto_session_rcv_msg(&s)==1) {
+                  //fprintf(stderr, "Got inside the if statement.\n");
+                  mt = proto_session_hdr_unmarshall_type(&s);
+                  if (mt > PROTO_MT_EVENT_BASE_RESERVED_FIRST && 
+                  mt < PROTO_MT_EVENT_BASE_RESERVED_LAST)
+                  {
+                    hdlr = Proto_Server.base_req_handlers[mt];
+                    //fprintf(stderr, "Set hdlr to request handler.\n");
+            	      if (hdlr(&s)<0) goto leave;
+                  }
+                } else {
+                  goto leave;
+                }
+             }
+             leave:
+              //Proto_Server.ADD CODE
+              close(s.fd);
+              return NULL;
             }
 
             static
@@ -304,7 +315,7 @@
             				     proto_session_lost_default_handler);
               for (i=PROTO_MT_REQ_BASE_RESERVED_FIRST+1; 
                    i<PROTO_MT_REQ_BASE_RESERVED_LAST; i++) {
-                Proto_Server.base_req_handlers[i] = Proto_Server.session_lost_handler;
+                Proto_Server.base_req_handlers[i] = proto_server_mt_null_handler;
               }
 
 

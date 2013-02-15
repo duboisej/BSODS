@@ -281,11 +281,15 @@ proto_session_body_unmarshall_bytes(Proto_Session *s, int offset, int len,
 extern  int
 proto_session_send_msg(Proto_Session *s, int reset)
 {
+  //NYI();
   s->shdr.blen = htonl(s->slen);
 
   // write request
   // changed
-  net_writen(s->fd, s->sbuf, s->shdr.blen);
+  if (net_writen(s->fd, s->sbuf, s->shdr.blen) == -1)
+  {
+    return -1;
+  }
   
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_send_msg: SENT:\n", pthread_self());
@@ -301,15 +305,19 @@ proto_session_send_msg(Proto_Session *s, int reset)
 extern int
 proto_session_rcv_msg(Proto_Session *s)
 {
+  //NYI();
   
   proto_session_reset_receive(s);
 
   // read reply
   // changed
 
-  //s->shdr.blen = ntohl(s->rlen);
+  s->rhdr.blen = ntohl(s->rlen);
 
-  net_readn(s->fd, s->rbuf, s->shdr.blen);
+  if (net_readn(s->fd, s->rbuf, s->rhdr.blen) == -1)
+    {
+      return -1;
+    }
 
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
@@ -321,11 +329,18 @@ proto_session_rcv_msg(Proto_Session *s)
 extern int
 proto_session_rpc(Proto_Session *s) 
 {
-  // int rc;
+   int rc;
   
-  // //ADD CODE
+   if (proto_session_send_msg(s, 1) != -1)
+   {
+      rc = proto_session_rcv_msg(s);
+   }
+   else
+   {
+      rc = -1;
+   }
 
-  // return rc;
-  NYI();
+   return rc;
+  //NYI();
 }
 

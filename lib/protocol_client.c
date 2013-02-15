@@ -116,15 +116,19 @@ proto_client_event_dispatcher(void * arg)
 
   pthread_detach(pthread_self());
 
-  //c = arg; // changed
-  //s = c.event_session;// changed
+  c = arg; // changed
+  s = &c->event_session;
 
+
+  //NYI();
   for (;;) {
     if (proto_session_rcv_msg(s)==1) {
       mt = proto_session_hdr_unmarshall_type(s);
       if (mt > PROTO_MT_EVENT_BASE_RESERVED_FIRST && 
 	  mt < PROTO_MT_EVENT_BASE_RESERVED_LAST) {
-	   // // changed - pthread_create(c.base_event_handlers[mt] ? 
+	   hdlr = c->base_event_handlers[mt];
+
+
 	if (hdlr(s)<0) goto leave;
       }
     } else {
@@ -153,7 +157,7 @@ proto_client_init(Proto_Client_Handle *ch)
 
   for (mt=PROTO_MT_EVENT_BASE_RESERVED_FIRST+1;
        mt<PROTO_MT_EVENT_BASE_RESERVED_LAST; mt++)
-    c->base_event_handlers[mt] = c->session_lost_handler;
+    c->base_event_handlers[mt] = &proto_client_event_null_handler;
 
   *ch = c;
   return 1;
@@ -196,25 +200,25 @@ static int
 do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
 {
 
-  NYI();
-  // int rc;
-  // Proto_Session *s;
-  // Proto_Client *c = ch;
+  //NYI();
+  int rc;
+  Proto_Session *s;
+  Proto_Client *c = ch;
 
-  // s = ADD CODE
-  // // marshall
+  s = &c->rpc_session;
+  // marshall
 
-  // marshall_mtonly(s, mt);
-  // rc = proto_session_ADD CODE
+  marshall_mtonly(s, mt);
+  rc = proto_session_rpc(s);
 
-  // if (rc==1) {
-  //   proto_session_body_unmarshall_int(s, 0, &rc);
-  // } else {
-  //   ADD CODE
-  // }
+  if (rc==1) {
+    proto_session_body_unmarshall_int(s, 0, &rc);
+  } else {
+    
+  }
   
-  // return rc;
-  return -1;
+  return rc;
+
 }
 extern int 
 proto_client_hello(Proto_Client_Handle ch)
@@ -233,5 +237,4 @@ proto_client_goodbye(Proto_Client_Handle ch)
 {
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_GOODBYE);  
 }
-
 

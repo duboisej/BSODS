@@ -73,4 +73,19 @@ Decisions:
 	1) Use NYI() to keep track of which methods we've implemented 
 	2) Use JoinMe for future team meetings, to facilitate better communication.
 Comments/Notes:
-	We implemented the NYI() function and got the whole thing compiling. We then began implementing methods based on the lines where NYI() was called. We made changes and managed to initialize the client and server, get them to connect, and to start handling/dispatching events. 
+	We implemented the NYI() function and got the whole thing compiling. We then began implementing methods based on the lines where NYI() was called. We made changes and managed to initialize the client and server, get them to connect, and to start handling/dispatching events.
+	
+Fri Feb 15 15:03:45 EST 2013
+Attendees: Ethan DuBois, Eddie Rivas
+Questions:
+	1) What are dispatchers?
+	2) How do we make them work properly?
+	3) Why are we getting a SEGFAULT error?
+Decisions:
+	1) Figure out the dispatchers. Make sure they work properly.
+	2) For our future client.c and server.c, make more user friendly menus.
+	3) Make sure we get to a state where the client and server sit and wait (we can worry about commands when we get that far).
+Comments/Notes:
+	Figured out the dispatchers are threads that deal with the waiting-for-messages processes.
+	Finally got them working and sitting at an idle state. Now the server and client connect and wait patiently for commands.
+	Marshalling messages working, although events don't really exist and handlers for them are null.
