@@ -72,19 +72,17 @@
             extern int
             proto_server_set_req_handler(Proto_Msg_Types mt, Proto_MT_Handler h)
             {
-              NYI();
-              // int i;
+              //NYI();
+              int i;
 
-              // if (mt>PROTO_MT_REQ_BASE_RESERVED_FIRST &&
-              //     mt<PROTO_MT_REQ_BASE_RESERVED_LAST) {
-              //   i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
-
-              //   ADD CODE
-              //   return 1;
-              // } else {
-              //   return -1;
-              // }
-              return -1;
+              if (mt>PROTO_MT_REQ_BASE_RESERVED_FIRST &&
+                  mt<PROTO_MT_REQ_BASE_RESERVED_LAST) {
+                i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
+                Proto_Server.base_req_handlers[i] = h;
+                return 1;
+              } else {
+                return -1;
+              }
             }
 
 
@@ -115,7 +113,7 @@
                   }
                 }
               }
-
+              fprintf(stderr, "Number of subscribers: %d\n", Proto_Server.EventNumSubscribers);
               pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
 
               return rc;
@@ -156,34 +154,42 @@
             void
             proto_server_post_event(void) 
             {
-              NYI();
-             //  int i;
-             //  int num;
+              //NYI();
+              int i;
+              int num;
 
-             //  pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
+              pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
 
-             //  i = 0;
-             //  num = Proto_Server.EventNumSubscribers;
-             //  while (num) {
-             //    Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
-             //    if (Proto_Server.EventSession.fd != -1) {
-             //      num--;
-             //      if (ADD CODE)<0) {
-            	// // must have lost an event connection
-            	// close(Proto_Server.EventSession.fd);
-            	// Proto_Server.EventSubscribers[i]=-1;
-            	// Proto_Server.EventNumSubscribers--;
-            	// Proto_Server.ADD CODE
-             //      } 
-             //      // FIXME: add ack message here to ensure that game is updated 
-             //      // correctly everywhere... at the risk of making server dependent
-             //      // on client behaviour  (use time out to limit impact... drop
-             //      // clients that misbehave but be carefull of introducing deadlocks
-             //    }
-             //    i++;
-             //  }
-             //  proto_session_reset_send(&Proto_Server.EventSession);
-             //  pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
+              i = 0;
+              num = Proto_Server.EventNumSubscribers;
+              while (num) {
+                Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
+                if (Proto_Server.EventSession.fd != -1) {
+                  num--;
+                  if (proto_session_send_msg(&Proto_Server.EventSession, 1)<0) {
+            	       // must have lost an event connection
+            	       close(Proto_Server.EventSession.fd);
+            	       Proto_Server.EventSubscribers[i]=-1;
+            	       Proto_Server.EventNumSubscribers--;
+            	       //Proto_Server.
+                  } 
+                  // while (/// time less than timeout)
+                  // {
+                  //     if (proto_session_rcv_msg(&s) <0)
+                  //     {
+                  //       // get reply
+                  //       break;
+                  //     }
+                  // }
+                  // FIXME: add ack message here to ensure that game is updated 
+                  // correctly everywhere... at the risk of making server dependent
+                  // on client behaviour (use time out to limit impact... drop
+                  // clients that misbehave but be carefull of introducing deadlocks
+                }
+                i++;
+              }
+              proto_session_reset_send(&Proto_Server.EventSession);
+              pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
             }
 
 
@@ -215,9 +221,11 @@
                 if (proto_session_rcv_msg(&s)==1) {
                   //fprintf(stderr, "Got inside the if statement.\n");
                   mt = proto_session_hdr_unmarshall_type(&s);
-                  if (mt > PROTO_MT_EVENT_BASE_RESERVED_FIRST && 
-                  mt < PROTO_MT_EVENT_BASE_RESERVED_LAST)
+
+                  if (mt > PROTO_MT_REQ_BASE_RESERVED_FIRST && 
+                  mt < PROTO_MT_REQ_BASE_RESERVED_LAST)
                   {
+                    fprintf(stderr, "Good mt = %d", mt);
                     hdlr = Proto_Server.base_req_handlers[mt];
                     //fprintf(stderr, "Set hdlr to request handler.\n");
             	      if (hdlr(&s)<0) goto leave;
@@ -227,7 +235,7 @@
                 }
              }
              leave:
-              //Proto_Server.ADD CODE
+              Proto_Server.session_lost_handler(&s);
               close(s.fd);
               return NULL;
             }

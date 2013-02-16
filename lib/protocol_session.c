@@ -282,11 +282,14 @@ extern  int
 proto_session_send_msg(Proto_Session *s, int reset)
 {
   //NYI();
+  fprintf(stderr, "Before marshaling, slen = %d\n", s->slen);
   s->shdr.blen = htonl(s->slen);
+  fprintf(stderr, "After marshaling, slen (or s->shdr.blen) = %d\n", s->shdr.blen);
 
   // write request
   // changed
-  if (net_writen(s->fd, s->sbuf, s->shdr.blen) == -1)
+  //fprintf(stderr, "Writing %d bytes to the socket.", s->slen);
+  if (net_writen(s->fd, s->sbuf, s->slen) == -1)
   {
     return -1;
   }
@@ -314,7 +317,7 @@ proto_session_rcv_msg(Proto_Session *s)
 
   s->rhdr.blen = ntohl(s->rlen);
 
-  if (net_readn(s->fd, s->rbuf, s->rhdr.blen) == -1)
+  if (net_readn(s->fd, s->rbuf, s->rlen) == -1)
     {
       return -1;
     }
@@ -330,9 +333,13 @@ extern int
 proto_session_rpc(Proto_Session *s) 
 {
    int rc;
-  
+   fprintf(stderr, "Before unmarshalling, mt = %d\n", s->shdr.type);
+   int unmarshalled = ntohl(s->shdr.type);
+   fprintf(stderr, "After unmarshalling, mt = %d\n", unmarshalled);
+
    if (proto_session_send_msg(s, 1) != -1)
    {
+      fprintf(stderr, "Sent message correctly in proto_session_rpc.\n");
       rc = proto_session_rcv_msg(s);
    }
    else

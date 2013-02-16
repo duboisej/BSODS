@@ -12,15 +12,16 @@ problems and traced them to a bug in the lib directory. Talked about
 Git/GitHub and came up with naming conventions/communication methods that
 we will use. Assigned tasks to complete before next meeting.
 
+
 Tues Jan 29 19:42:35 EST 2013
 Attendees: Eduardo Rivas, Ethan Dubois, Niko Konstantakos
 Questions: 1) What do each of the skeleton code files do and how? 2)
 Explain the different sections of code with explicit questions 3) How do
 the net.c methods work and what are their purpose?
-Decisions: 1) Created new branch A1. 
-Todo: Debug the executables (finish problem 6) 
+Decisions: 1) Created new branch A1.
+Todo: Debug the executables (finish problem 6)
 Comments/Notes: Went through the skeleton code line by line to understand
-it. Explained significant parts of the code (below). 
+it. Explained significant parts of the code (below).
 getInput() (client): bzero zeros the data of the buffer. Then it reads in a
 command from the user and stores it in the data buffer of globals, removing a
 newline if it exists and returning the length of the command.
@@ -32,60 +33,75 @@ number is different than the size of the length (int), an error is printed
 and the method ends. If not, it then goes through the same process for the
 actual string that's being sent, printing an error if the number of bytes
 sent isn't equal to the number of bytes received. Finally, it reads the
-message back into a buffer from the server and displays it. 
+message back into a buffer from the server and displays it.
 main (server): The net_setup_listen_socket and net_listen methods are
 called to set up the socket and begin listening on the given port. Finally,
 a new thread is created and associated with the "doit()" method, to listen
 for an incoming message from the client.
 
+
 Wed Jan 30 13:46:39 EST 2013
 Attendees: Ethan DuBois
 Questions: 1) Why are some of the pthread method references undefined? 2)
-What is the cause of "send failed" errors in client? 
+What is the cause of "send failed" errors in client?
 Decisions: none
 Todo: Fix client/server send bug - team
 Comments/Notes: Fixed undefined reference issue by including -lpthread in
 the compile command.
 
+
 Wed Jan 30 19:00:00 EST 2013
 Attendees: Ethan DuBois, Niko Konstantakos, Eddie Rivas
-Questions: 1)What is the cause of "send failed" errors in client? 
+Questions: 1)What is the cause of "send failed" errors in client?
 Decisions: 1)Ran all tests from readme.txt on our client/server executables, they all seemingly worked.
 Comments/Notes: Fixed "send failed" issue and added support for command line arguments (port number).
 
 
-Thu Feb  7 13:27:33 EST 2013
+Thu Feb 7 13:27:33 EST 2013
 Attendees: Ethan DuBois, Niko Konstantakos, Eddie Rivas
 Questions:
-	1) What are our goals for the new assignment?
-	2) How do we begin tackling on the tasks?
+1) What are our goals for the new assignment?
+2) How do we begin tackling on the tasks?
 Decisions:
-	1) Started by working through the protocol_session.c. Finished all prototype methods except RPC.
+1) Started by working through the protocol_session.c. Finished all prototype methods except RPC.
 Comments/Notes:
-	We're still trying to understand how all the pieces got together, but by looking through the already written marshalling methods we were able to unfold all the other ones. The rpc method is still a mystery to us, but we haven't worked through the server and client protocols, so we're not sure what kind of rpc's we'll be making. We feel we made pretty good progress for day 1.
+We're still trying to understand how all the pieces got together, but by looking through the already written marshalling methods we were able to unfold all the other ones. The rpc method is still a mystery to us, but we haven't worked through the server and client protocols, so we're not sure what kind of rpc's we'll be making. We feel we made pretty good progress for day 1.
+
 
 Thu Feb 14 15:59:45 EST 2013
 Attendees: Ethan DuBois, Niko Konstantakos, Eddie Rivas
 Questions:
-	1) What are RPC's? 
-	2) How do we begin connecting the client and server?
+1) What are RPC's?
+2) How do we begin connecting the client and server?
 Decisions:
-	1) Use NYI() to keep track of which methods we've implemented 
-	2) Use JoinMe for future team meetings, to facilitate better communication.
+1) Use NYI() to keep track of which methods we've implemented
+2) Use JoinMe for future team meetings, to facilitate better communication.
 Comments/Notes:
-	We implemented the NYI() function and got the whole thing compiling. We then began implementing methods based on the lines where NYI() was called. We made changes and managed to initialize the client and server, get them to connect, and to start handling/dispatching events.
-	
+We implemented the NYI() function and got the whole thing compiling. We then began implementing methods based on the lines where NYI() was called. We made changes and managed to initialize the client and server, get them to connect, and to start handling/dispatching events.
+
+
 Fri Feb 15 15:03:45 EST 2013
 Attendees: Ethan DuBois, Eddie Rivas
 Questions:
-	1) What are dispatchers?
-	2) How do we make them work properly?
-	3) Why are we getting a SEGFAULT error?
+1) What are dispatchers?
+2) How do we make them work properly?
+3) Why are we getting a SEGFAULT error?
 Decisions:
-	1) Figure out the dispatchers. Make sure they work properly.
-	2) For our future client.c and server.c, make more user friendly menus.
-	3) Make sure we get to a state where the client and server sit and wait (we can worry about commands when we get that far).
+1) Figure out the dispatchers. Make sure they work properly.
+2) For our future client.c and server.c, make more user friendly menus.
+3) Make sure we get to a state where the client and server sit and wait (we can worry about commands when we get that far).
 Comments/Notes:
-	Figured out the dispatchers are threads that deal with the waiting-for-messages processes.
-	Finally got them working and sitting at an idle state. Now the server and client connect and wait patiently for commands.
-	Marshalling messages working, although events don't really exist and handlers for them are null.
+Figured out the dispatchers are threads that deal with the waiting-for-messages processes.
+Finally got them working and sitting at an idle state. Now the server and client connect and wait patiently for commands.
+Marshalling messages working, although events don't really exist and handlers for them are null.
+
+
+Sat Feb 16 13:00:00 EST 2013
+Attendees: Ethan DuBois, Niko Konstantakos, Eddie Rivas
+Questions:
+1) Why isn't slen being transmitted correctly?
+Decisions:
+1) Keep tracing back, to find root of the slen issue.
+Comments/Notes:
+RPC functionality tests are being halted by this slen issue. In order to tests the RPC
+functionality, we need to resolve this slen issue.

@@ -101,6 +101,12 @@ shell(void *arg)
   return NULL;
 }
 
+int printHello(Proto_Session *s)
+{
+  fprintf(stderr, "Hello!! You've successfully sent a hello RPC.\n");
+  return 1;
+}
+
 int
 main(int argc, char **argv)
 { 
@@ -118,6 +124,9 @@ main(int argc, char **argv)
     fprintf(stderr, "ERROR: failed to start rpc loop\n");
     exit(-1);
   }
+
+  Proto_MT_Handler h = printHello;
+  proto_server_set_req_handler(PROTO_MT_REQ_BASE_HELLO, h);
     
   shell(NULL);
 

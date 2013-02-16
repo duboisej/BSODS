@@ -71,19 +71,18 @@ proto_client_set_event_handler(Proto_Client_Handle ch, Proto_Msg_Types mt,
 			       Proto_MT_Handler h)
 {
 
-  NYI();
-  // int i;
-  // Proto_Client *c = ch;
+  //NYI();
+  int i;
+  Proto_Client *c = ch;
 
-  // if (mt>PROTO_MT_EVENT_BASE_RESERVED_FIRST && 
-  //     mt<PROTO_MT_EVENT_BASE_RESERVED_LAST) {
-  //   i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST - 1;
-  //   ADD CODE
-  //   return 1;
-  // } else {
-  //   return -1;
-  // }
-  return -1;
+  if (mt>PROTO_MT_EVENT_BASE_RESERVED_FIRST && 
+      mt<PROTO_MT_EVENT_BASE_RESERVED_LAST) {
+    i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST - 1;
+    c->base_event_handlers[i] = h;
+    return 1;
+  } else {
+    return -1;
+  }
 }
 
 static int 
@@ -125,14 +124,15 @@ proto_client_event_dispatcher(void * arg)
     if (proto_session_rcv_msg(s)==1) {
       mt = proto_session_hdr_unmarshall_type(s);
       if (mt > PROTO_MT_EVENT_BASE_RESERVED_FIRST && 
-	  mt < PROTO_MT_EVENT_BASE_RESERVED_LAST) {
-	   hdlr = c->base_event_handlers[mt];
-
-
-	if (hdlr(s)<0) goto leave;
+	       mt < PROTO_MT_EVENT_BASE_RESERVED_LAST) {
+	       hdlr = c->base_event_handlers[mt];
+	       if (hdlr(s)<0) goto leave;
       }
-    } else {
-      //ADD CODE
+    }
+    else 
+    {
+      //fprintf(stderr, "Proto_session_rcv_msg failed.");
+      c->session_lost_handler(&s);
       goto leave;
     }
   }
@@ -205,10 +205,13 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   Proto_Session *s;
   Proto_Client *c = ch;
 
-  s = &c->rpc_session;
-  // marshall
+  s = &(c->rpc_session);
 
+  // marshall
+  fprintf(stderr, "In do_generic_dummy_rpc, mt = %d\n", mt);
   marshall_mtonly(s, mt);
+  fprintf(stderr, "In do_generic_dummy_rpc, s->mt = %d\n", s->shdr.type);
+  fprintf(stderr, "In do_generic_dummy_rpc, s->slen = %d\n", s->slen);
   rc = proto_session_rpc(s);
 
   if (rc==1) {
