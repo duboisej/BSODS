@@ -105,15 +105,3 @@ Decisions:
 Comments/Notes:
 RPC functionality tests are being halted by this slen issue. In order to tests the RPC
 functionality, we need to resolve this slen issue.
-
-Sat Feb 18 17:32:00 EST 2013
-Attendees: Ethan DuBois, Niko Konstantakos
-Questions:
-1) Why is the server not receiving RPC's?
-2.) Why is the client not handling events correctly?
-3.) When/where are we supposed to be sending replies back from the server?
-Decisions:
-1) Removed the -1 in the computation of i in set_request_handler.
-Comments/Notes:
-We tested and fixed RPC functionality and began testing event
-handling. Also, added commands to send RPC replies.
