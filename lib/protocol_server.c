@@ -77,8 +77,10 @@
 
               if (mt>PROTO_MT_REQ_BASE_RESERVED_FIRST &&
                   mt<PROTO_MT_REQ_BASE_RESERVED_LAST) {
-                i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
+                //i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
+                i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST; // NOTE: Removed -1 from line above to make index of handler correspond to message type.
                 Proto_Server.base_req_handlers[i] = h;
+                fprintf(stderr, "Set request handler for index %d of request handler array", i);
                 return 1;
               } else {
                 return -1;
@@ -97,7 +99,7 @@
               if (Proto_Server.EventLastSubscriber < PROTO_SERVER_MAX_EVENT_SUBSCRIBERS
                   && Proto_Server.EventSubscribers[Proto_Server.EventLastSubscriber]
                   ==-1) {
-                Proto_Server.EventSubscribers[Proto_Server.EventLastSubscriber] = 1; // changed
+                Proto_Server.EventSubscribers[Proto_Server.EventLastSubscriber] = fd; // changed
                 *num = Proto_Server.EventLastSubscriber;// changed
                 Proto_Server.EventLastSubscriber++;// changed
                 Proto_Server.EventNumSubscribers++;// changed
@@ -106,7 +108,7 @@
                 int i;
                 for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
                   if (Proto_Server.EventSubscribers[i]==-1) {
-            	   Proto_Server.EventSubscribers[i] = 1;  // changed
+            	   Proto_Server.EventSubscribers[i] = fd;  // changed
             	   *num=i; // changed
                    Proto_Server.EventNumSubscribers++; // changed
             	   rc=1;
@@ -225,7 +227,7 @@
                   if (mt > PROTO_MT_REQ_BASE_RESERVED_FIRST && 
                   mt < PROTO_MT_REQ_BASE_RESERVED_LAST)
                   {
-                    fprintf(stderr, "Good mt = %d", mt);
+                    //fprintf(stderr, "Good mt = %d", mt);
                     hdlr = Proto_Server.base_req_handlers[mt];
                     //fprintf(stderr, "Set hdlr to request handler.\n");
             	      if (hdlr(&s)<0) goto leave;

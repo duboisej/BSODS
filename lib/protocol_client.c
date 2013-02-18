@@ -77,7 +77,7 @@ proto_client_set_event_handler(Proto_Client_Handle ch, Proto_Msg_Types mt,
 
   if (mt>PROTO_MT_EVENT_BASE_RESERVED_FIRST && 
       mt<PROTO_MT_EVENT_BASE_RESERVED_LAST) {
-    i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST - 1;
+    i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST;
     c->base_event_handlers[i] = h;
     return 1;
   } else {
