@@ -294,7 +294,8 @@ proto_session_send_msg(Proto_Session *s, int reset)
   //   fprintf(stderr,"%c", s->sbuf[k]);
   // }
   // fprintf(stderr, "\n");
-  //fprintf(stderr, "Writing %d bytes to the socket.", s->slen);
+  fprintf(stderr, "Writing bytes to fd %d\n", s->fd);
+  fprintf(stderr, "sizeof(Proto_Msg_Hdr) = %d\n", sizeof(Proto_Msg_Hdr));
   if (net_writen(s->fd, &(s->shdr), sizeof(Proto_Msg_Hdr)) == -1)
   {
     return -1;

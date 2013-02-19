@@ -102,7 +102,9 @@
                 Proto_Server.EventSubscribers[Proto_Server.EventLastSubscriber] = fd; // changed
                 *num = Proto_Server.EventLastSubscriber;// changed
                 Proto_Server.EventLastSubscriber++;// changed
+                //fprintf()
                 Proto_Server.EventNumSubscribers++;// changed
+                fprintf(stderr, "Subscriber number %d recorded at index %d\n", Proto_Server.EventNumSubscribers, (Proto_Server.EventLastSubscriber - 1));
                 rc = 1;
               } else {
                 int i;
@@ -166,15 +168,24 @@
               num = Proto_Server.EventNumSubscribers;
               while (num) {
                 Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
+                fprintf(stderr, "Got fd #%d from index %d\n", Proto_Server.EventSession.fd, i);
                 if (Proto_Server.EventSession.fd != -1) {
                   num--;
-                  if (proto_session_send_msg(&Proto_Server.EventSession, 1)<0) {
+                  int unmarshalled = ntohl(Proto_Server.EventSession.shdr.type);
+                  fprintf(stderr, "Server Event Session shdr mt = %d\n", unmarshalled);
+                  fprintf(stderr, "Server Event Session shdr blen = %d\n", Proto_Server.EventSession.shdr.blen);
+                  if (proto_session_send_msg(&Proto_Server.EventSession, 0)<0) {
             	       // must have lost an event connection
             	       close(Proto_Server.EventSession.fd);
             	       Proto_Server.EventSubscribers[i]=-1;
             	       Proto_Server.EventNumSubscribers--;
-            	       //Proto_Server.
+                     fprintf(stderr, "Post event failed.");
+            	       Proto_Server.session_lost_handler(&Proto_Server.EventSession);
                   } 
+                  else 
+                  {
+                    fprintf(stderr, "Apparently post_event worked correctly.");
+                  }
                   // while (/// time less than timeout)
                   // {
                   //     if (proto_session_rcv_msg(&s) <0)

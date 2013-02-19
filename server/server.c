@@ -119,7 +119,12 @@
 
     rc=proto_session_send_msg(s,1);
 
-    proto_server_post_event();
+
+    // bzero(&h, sizeof(s));
+    // h.type = PROTO_MT_EVENT_BASE_UPDATE;
+    // //rc=proto_session_send_msg(s,1);
+
+    //proto_server_post_event();
 
     return rc;
   }
@@ -140,7 +145,6 @@
                 // setup a dummy body that just has a return code 
     proto_session_body_marshall_int(s, 0xdeadbeef);
 
-    rc=proto_session_send_msg(s,1);
 
     return rc;
   }

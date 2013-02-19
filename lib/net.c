@@ -177,6 +177,7 @@ net_writen(FDType fd, const void *vptr, size_t n)
       if (nwritten < 0 && errno == EINTR)
 	nwritten = 0;	/* and call write() again */
       else
+        fprintf(stderr, "nwritten was -1");
 	return(-1);	/* error */
     }
     
