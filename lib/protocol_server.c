@@ -104,7 +104,7 @@
                 Proto_Server.EventLastSubscriber++;// changed
                 //fprintf()
                 Proto_Server.EventNumSubscribers++;// changed
-                fprintf(stderr, "Subscriber number %d recorded at index %d\n", Proto_Server.EventNumSubscribers, (Proto_Server.EventLastSubscriber - 1));
+                fprintf(stderr, "Subscriber number %d with file descriptor %d recorded at index %d\n", Proto_Server.EventNumSubscribers, fd, (Proto_Server.EventLastSubscriber - 1));
                 rc = 1;
               } else {
                 int i;
@@ -145,7 +145,7 @@
                   printf("Second");
                   fprintf(stderr, "EventListen: connfd=%d -> ", connfd);
 
-                  if (proto_server_record_event_subscriber(fd, &i) <0) {
+                  if (proto_server_record_event_subscriber(connfd, &i) <0) {
             	fprintf(stderr, "oops no space for any more event subscribers\n");
             	close(connfd);
                   } else {
@@ -179,12 +179,12 @@
             	       close(Proto_Server.EventSession.fd);
             	       Proto_Server.EventSubscribers[i]=-1;
             	       Proto_Server.EventNumSubscribers--;
-                     fprintf(stderr, "Post event failed.");
+                     fprintf(stderr, "Post event failed.\n");
             	       Proto_Server.session_lost_handler(&Proto_Server.EventSession);
                   } 
                   else 
                   {
-                    fprintf(stderr, "Apparently post_event worked correctly.");
+                    fprintf(stderr, "Apparently post_event worked correctly.\n");
                   }
                   // while (/// time less than timeout)
                   // {
@@ -209,7 +209,7 @@
             static void *
             proto_server_req_dispatcher(void * arg)
             {
-              printf("Got into method.");
+              //printf("Got into method.");
               //NYI();
               Proto_Session s;
               Proto_Msg_Types mt;
@@ -233,7 +233,7 @@
                 //fprintf(stderr, "got here");
                 if (proto_session_rcv_msg(&s)==1) {
                   //fprintf(stderr, "Got inside the if statement.\n");
-                  mt = proto_session_hdr_unmarshall_type(&s);
+                  //mt = proto_session_hdr_unmarshall_type(&s);
 
                   if (mt > PROTO_MT_REQ_BASE_RESERVED_FIRST && 
                   mt < PROTO_MT_REQ_BASE_RESERVED_LAST)
@@ -352,7 +352,7 @@
             			     &(Proto_Server.RPCPort));
 
               if (rc==0) { 
-                fprintf(stderr, "prot_server_init: net_setup_listen_socket: FAILED for RPCPort\n");
+                fprintf(stderr, "proto_server_init: net_setup_listen_socket: FAILED for RPCPort\n");
                 return -1;
               }
 

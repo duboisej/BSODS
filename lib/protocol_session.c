@@ -295,14 +295,15 @@ proto_session_send_msg(Proto_Session *s, int reset)
   // }
   // fprintf(stderr, "\n");
   fprintf(stderr, "Writing bytes to fd %d\n", s->fd);
+  fprintf(stderr, "Address of shdr = %x\n", &(s->shdr));
   fprintf(stderr, "sizeof(Proto_Msg_Hdr) = %d\n", sizeof(Proto_Msg_Hdr));
   if (net_writen(s->fd, &(s->shdr), sizeof(Proto_Msg_Hdr)) == -1)
   {
     return -1;
   }
-    fprintf(stderr, "Wrote message type: %d", s->shdr.type);
-    fprintf(stderr, "Wrote version: %d", s->shdr.version);
-    fprintf(stderr, "Wrote blen: %d", s->shdr.blen);
+  fprintf(stderr, "Wrote message type: %d", s->shdr.type);
+  fprintf(stderr, "Wrote version: %d", s->shdr.version);
+  fprintf(stderr, "Wrote blen: %d", s->shdr.blen);
 
   if (net_writen(s->fd, &(s->sbuf), s->slen) == -1)
   {
@@ -338,12 +339,13 @@ proto_session_rcv_msg(Proto_Session *s)
   }
   else if (ret != 0)
   {
-    fprintf(stderr, "Wrote message type: %d", s->rhdr.type);
-    fprintf(stderr, "Wrote version: %d", s->rhdr.version);
-    fprintf(stderr, "Wrote blen: %d", s->rhdr.blen);
+    proto_dump_msghdr(&(s->rhdr));
+    // fprintf(stderr, "Received message type: %d\n", s->rhdr.type);
+    // fprintf(stderr, "Received version: %d\n", s->rhdr.version);
+    // fprintf(stderr, "Received blen: %d\n", s->rhdr.blen);
   }
 
-  s->rlen = ntohl(s->rhdr.blen);
+  //proto_session_hdr_unmarshall(&s, &(s->rhdr));
 
   if (net_readn(s->fd, &(s->rbuf), s->rlen) == -1)
     {

@@ -242,6 +242,13 @@ initGlobals(int argc, char **argv)
 
 }
 
+static int
+testEvent(Proto_Session *s)
+{
+  fprintf(stderr, "Received test event! OMGLOL!!!");
+  return 1;
+}
+
 int 
 main(int argc, char **argv)
 {
@@ -254,13 +261,22 @@ main(int argc, char **argv)
     return -1;
   } 
 
-  printf("Finished client_init"); 
+  //printf("Finished client_init"); 
 
   // ok startup our connection to the server
   if (startConnection(&c, globals.host, globals.port, update_event_handler)<0) {
     fprintf(stderr, "ERROR: startConnection failed\n");
     return -1;
   }
+
+  fprintf(stderr, "Address of Client c is now %x\n", &c);
+
+  Proto_MT_Handler h;
+  fprintf(stderr, "Got past declaration.\n");
+  h = &testEvent;
+  fprintf(stderr, "Got past assignment of testEvent function\n");
+  proto_client_set_event_handler(c.ph, PROTO_MT_EVENT_BASE_UPDATE, h);
+  fprintf(stderr, "got past set_event_handler call\n");
 
   shell(&c);
 

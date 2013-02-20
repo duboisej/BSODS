@@ -79,6 +79,7 @@ proto_client_set_event_handler(Proto_Client_Handle ch, Proto_Msg_Types mt,
       mt<PROTO_MT_EVENT_BASE_RESERVED_LAST) {
     i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST;
     c->base_event_handlers[i] = h;
+    fprintf(stderr, "Set testEvent() handler at index %d of event handlers.\n", i);
     return 1;
   } else {
     return -1;
@@ -125,7 +126,7 @@ proto_client_event_dispatcher(void * arg)
       mt = proto_session_hdr_unmarshall_type(s);
       if (mt > PROTO_MT_EVENT_BASE_RESERVED_FIRST && 
 	       mt < PROTO_MT_EVENT_BASE_RESERVED_LAST) {
-	       hdlr = c->base_event_handlers[mt];
+	       hdlr = c->base_event_handlers[mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST];
 	       if (hdlr(s)<0) goto leave;
       }
     }
@@ -181,6 +182,8 @@ proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
     perror("proto_client_init:");
     return -3;
   }
+
+   fprintf(stderr, "Client event session fd = %d\n Client rpc session fd = %d\n", c->event_session.fd, c->rpc_session.fd);
 
   return 0;
 }

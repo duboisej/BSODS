@@ -164,11 +164,18 @@ net_writen(FDType fd, const void *vptr, size_t n)
   ssize_t		nwritten;
   const char	*ptr;
   
+
   ptr = vptr;
   nleft = n;
+   fprintf(stderr, "fd starts out as %d\n", fd);
+  // fprintf(stderr, "vptr starts out as %x\n", vptr);
+  // fprintf(stderr, "nleft starts out as %d\n", nleft);
+  // fprintf(stderr, "ptr starts out as %x\n", ptr);
+
   while (nleft > 0) {
 #ifndef __APPLE__
     if ( (nwritten = send(fd, ptr, nleft, MSG_NOSIGNAL)) <= 0) {
+      //fprintf(stderr, "nwritten was %d when nleft was %d\n", nwritten, nleft);
 #else
     // MIGHT NEED THIS VERSION ON OSX  : SIGPIPE IGNORED VIA 
     // SOCKOPT SO_NOSIGPIPE
@@ -177,7 +184,7 @@ net_writen(FDType fd, const void *vptr, size_t n)
       if (nwritten < 0 && errno == EINTR)
 	nwritten = 0;	/* and call write() again */
       else
-        fprintf(stderr, "nwritten was -1");
+        //fprintf(stderr, "nwritten was -1\n");
 	return(-1);	/* error */
     }
     
