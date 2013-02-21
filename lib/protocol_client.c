@@ -79,7 +79,7 @@ proto_client_set_event_handler(Proto_Client_Handle ch, Proto_Msg_Types mt,
       mt<PROTO_MT_EVENT_BASE_RESERVED_LAST) {
     i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST;
     c->base_event_handlers[i] = h;
-    fprintf(stderr, "Set testEvent() handler at index %d of event handlers.\n", i);
+    //fprintf(stderr, "Set testEvent() handler at index %d of event handlers.\n", i);
     return 1;
   } else {
     return -1;
@@ -183,7 +183,7 @@ proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
     return -3;
   }
 
-   fprintf(stderr, "Client event session fd = %d\n Client rpc session fd = %d\n", c->event_session.fd, c->rpc_session.fd);
+   //fprintf(stderr, "Client event session fd = %d\n Client rpc session fd = %d\n", c->event_session.fd, c->rpc_session.fd);
 
   return 0;
 }
@@ -211,10 +211,10 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   s = &(c->rpc_session);
 
   // marshall
-  fprintf(stderr, "In do_generic_dummy_rpc, mt = %d\n", mt);
+  //fprintf(stderr, "In do_generic_dummy_rpc, mt = %d\n", mt);
   marshall_mtonly(s, mt);
-  fprintf(stderr, "In do_generic_dummy_rpc, s->mt = %d\n", s->shdr.type);
-  fprintf(stderr, "In do_generic_dummy_rpc, s->slen = %d\n", s->slen);
+  //fprintf(stderr, "In do_generic_dummy_rpc, s->mt = %d\n", s->shdr.type);
+  //fprintf(stderr, "In do_generic_dummy_rpc, s->slen = %d\n", s->slen);
   rc = proto_session_rpc(s);
 
   if (rc==1) {

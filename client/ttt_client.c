@@ -29,11 +29,20 @@
 
 #define STRLEN 81
 
-struct Globals {
-  char host[STRLEN];
-  PortType port;
-} globals;
+struct LineBuffer {
+  char data[BUFLEN];
+  int  len;
+  int  newline;
+};
 
+struct Globals {
+  struct LineBuffer in;
+  char server[STRLEN];
+  PortType port;
+  FDType serverFD;
+  int connected;
+  int verbose;
+} globals;
 
 typedef struct ClientState  {
   int data;
@@ -88,7 +97,7 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 int
 prompt(int menu) 
 {
-  static char MenuString[] = "\nclient> ";
+  static char MenuString[] = "\n?> ";
   int ret;
   int c=0;
 
@@ -249,37 +258,68 @@ testEvent(Proto_Session *s)
   return 1;
 }
 
+static void
+printMenu()
+{
+  printf("Your options are: \nconnect <ip:port> (to connect to a server)\n");
+  printf("disconnect (to disconnect from the server)\n");
+  printf("<Enter key> (display current game board)\n");
+  printf("[0-9] (mark the appropriate cell)\n");
+  printf("where (display <ip:port> of the server you are connected to).\n");
+  printf("quit (to quit client)");
+
+}
+
 int 
 main(int argc, char **argv)
 {
   Client c;
-
-  initGlobals(argc, argv);
-
-  if (clientInit(&c) < 0) {
-    fprintf(stderr, "ERROR: clientInit failed\n");
-    return -1;
-  } 
-
-  //printf("Finished client_init"); 
-
-  // ok startup our connection to the server
-  if (startConnection(&c, globals.host, globals.port, update_event_handler)<0) {
-    fprintf(stderr, "ERROR: startConnection failed\n");
-    return -1;
-  }
-
-  fprintf(stderr, "Address of Client c is now %x\n", &c);
-
-  Proto_MT_Handler h;
-  //fprintf(stderr, "Got past declaration.\n");
-  h = &testEvent;
-  //fprintf(stderr, "Got past assignment of testEvent function\n");
-  proto_client_set_event_handler(c.ph, PROTO_MT_EVENT_BASE_UPDATE, h);
-  //fprintf(stderr, "got past set_event_handler call\n");
+  printf("Welcome to Tic-Tac-Toe!\n");
+  printMenu();
 
   shell(&c);
 
   return 0;
 }
+
+// Stuff from Assignment 1
+
+// int 
+// doCmd(void)
+// {
+//   int rc = 1;
+
+//   if (strlen(globals.in.data)==0) return rc;
+//   else if (strncmp(globals.in.data, "connect", 
+//        sizeof("connect")-1)==0) rc = doConnect();
+//   else if (strncmp(globals.in.data, "send", 
+//        sizeof("send")-1)==0) rc = doSend();
+//   else if (strncmp(globals.in.data, "quit", 
+//        sizeof("quit")-1)==0) rc = doQuit();
+//   else if (strncmp(globals.in.data, "verbose", 
+//        sizeof("verbose")-1)==0) rc = doVerbose();
+//   else printf("Unknown Command\n");
+
+//   return rc;
+// }
+
+// int
+// main(int argc, char **argv)
+// {
+//   int rc, menu=1;
+
+//   bzero(&globals, sizeof(globals));
+
+//   while (1) {
+//     if (prompt(menu)>=0) rc=doCmd(); else rc=-1;
+//     if (rc<0) break;
+//     //What do you think the next line is for
+//     if (rc==1) menu=1; else menu=0;
+//   }
+
+//   VPRINTF("Exiting\n");
+//   fflush(stdout);
+
+//   return 0;
+// }
 

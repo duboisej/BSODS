@@ -282,9 +282,9 @@ extern  int
 proto_session_send_msg(Proto_Session *s, int reset)
 {
   //NYI();
-  fprintf(stderr, "Before marshaling, slen = %d\n", s->slen);
+  //fprintf(stderr, "Before marshaling, slen = %d\n", s->slen);
   s->shdr.blen = htonl(s->slen);
-  fprintf(stderr, "After marshaling, slen (or s->shdr.blen) = %d\n", s->shdr.blen);
+  //fprintf(stderr, "After marshaling, slen (or s->shdr.blen) = %d\n", s->shdr.blen);
 
   // write request
   // changed
@@ -294,16 +294,16 @@ proto_session_send_msg(Proto_Session *s, int reset)
   //   fprintf(stderr,"%c", s->sbuf[k]);
   // }
   // fprintf(stderr, "\n");
-  fprintf(stderr, "Writing bytes to fd %d\n", s->fd);
-  fprintf(stderr, "Address of shdr = %x\n", &(s->shdr));
-  fprintf(stderr, "sizeof(Proto_Msg_Hdr) = %d\n", sizeof(Proto_Msg_Hdr));
+  // fprintf(stderr, "Writing bytes to fd %d\n", s->fd);
+  // fprintf(stderr, "Address of shdr = %x\n", &(s->shdr));
+  // fprintf(stderr, "sizeof(Proto_Msg_Hdr) = %d\n", sizeof(Proto_Msg_Hdr));
   if (net_writen(s->fd, &(s->shdr), sizeof(Proto_Msg_Hdr)) == -1)
   {
     return -1;
   }
-  fprintf(stderr, "Wrote message type: %d", s->shdr.type);
-  fprintf(stderr, "Wrote version: %d", s->shdr.version);
-  fprintf(stderr, "Wrote blen: %d", s->shdr.blen);
+  // fprintf(stderr, "Wrote message type: %d", s->shdr.type);
+  // fprintf(stderr, "Wrote version: %d", s->shdr.version);
+  // fprintf(stderr, "Wrote blen: %d", s->shdr.blen);
 
   if (net_writen(s->fd, &(s->sbuf), s->slen) == -1)
   {

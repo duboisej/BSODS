@@ -33,7 +33,7 @@
             #include "protocol_utils.h"
             #include "protocol_server.h"
 
-            #define PROTO_SERVER_MAX_EVENT_SUBSCRIBERS 1024
+            #define PROTO_SERVER_MAX_EVENT_SUBSCRIBERS 2
             #define NYI() assert(0)
 
             struct {
@@ -80,7 +80,7 @@
                 //i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
                 i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST; // NOTE: Removed -1 from line above to make index of handler correspond to message type.
                 Proto_Server.base_req_handlers[i] = h;
-                fprintf(stderr, "Set request handler for index %d of request handler array", i);
+                //fprintf(stderr, "Set request handler for index %d of request handler array", i);
                 return 1;
               } else {
                 return -1;
@@ -168,24 +168,24 @@
               num = Proto_Server.EventNumSubscribers;
               while (num) {
                 Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
-                fprintf(stderr, "Got fd #%d from index %d\n", Proto_Server.EventSession.fd, i);
+                //fprintf(stderr, "Got fd #%d from index %d\n", Proto_Server.EventSession.fd, i);
                 if (Proto_Server.EventSession.fd != -1) {
                   num--;
                   int unmarshalled = ntohl(Proto_Server.EventSession.shdr.type);
-                  fprintf(stderr, "Server Event Session shdr mt = %d\n", unmarshalled);
-                  fprintf(stderr, "Server Event Session shdr blen = %d\n", Proto_Server.EventSession.shdr.blen);
+                  //fprintf(stderr, "Server Event Session shdr mt = %d\n", unmarshalled);
+                  //fprintf(stderr, "Server Event Session shdr blen = %d\n", Proto_Server.EventSession.shdr.blen);
                   if (proto_session_send_msg(&Proto_Server.EventSession, 0)<0) {
             	       // must have lost an event connection
             	       close(Proto_Server.EventSession.fd);
             	       Proto_Server.EventSubscribers[i]=-1;
             	       Proto_Server.EventNumSubscribers--;
-                     fprintf(stderr, "Post event failed.\n");
+                     //fprintf(stderr, "Post event failed.\n");
             	       Proto_Server.session_lost_handler(&Proto_Server.EventSession);
                   } 
-                  else 
-                  {
-                    fprintf(stderr, "Apparently post_event worked correctly.\n");
-                  }
+                  // else 
+                  // {
+                  //   fprintf(stderr, "Apparently post_event worked correctly.\n");
+                  // }
                   // while (/// time less than timeout)
                   // {
                   //     if (proto_session_rcv_msg(&s) <0)

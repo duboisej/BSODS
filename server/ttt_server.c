@@ -28,6 +28,11 @@
   #include "../lib/protocol_server.h"
   #include "../lib/protocol_utils.h"
 
+  struct {
+    int player1RPC;
+    int player2RPC;
+  } Players;
+
   int 
   doUpdateClients(void)
   {
@@ -101,11 +106,20 @@
     return NULL;
   }
 
-  int printHello(Proto_Session *s)
+  int clientHello(Proto_Session *s)
   {
     int rc;
+    if (player1 == 0)
+    {
+      player1 = s->fd;
+    }
+    else
+    {
+      player2 = s->fd;
+    }
+
+
     Proto_Msg_Hdr h;
-    fprintf(stderr, "Client on fd # %d says hello!!\n", s->fd);
 
                 // setup dummy reply header : set correct reply message type and 
                 // everything else empty
@@ -124,9 +138,17 @@
     // h.type = PROTO_MT_EVENT_BASE_UPDATE;
     // //rc=proto_session_send_msg(s,1);
 
-    //proto_server_post_event();
+    proto_server_post_event();
 
     return rc;
+  }
+
+  int announcePlayer(int playernum)
+  {
+    Proto_Session *s = proto_server_event_session();
+    Proto_Msg_Hdr h = s->shdr;
+    h.type = PROTO_MT_EVENT_BASE_UPDATE;
+    proto_server_post_event;
   }
 
   int printGoodbye(Proto_Session *s)
@@ -167,7 +189,7 @@
       exit(-1);
     }
 
-    Proto_MT_Handler h = &printHello;
+    Proto_MT_Handler h = &clientHello;
     proto_server_set_req_handler(PROTO_MT_REQ_BASE_HELLO, h);
     Proto_MT_Handler g = &printGoodbye;
     proto_server_set_req_handler(PROTO_MT_REQ_BASE_GOODBYE, g);

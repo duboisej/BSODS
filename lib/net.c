@@ -167,10 +167,6 @@ net_writen(FDType fd, const void *vptr, size_t n)
 
   ptr = vptr;
   nleft = n;
-   fprintf(stderr, "fd starts out as %d\n", fd);
-  // fprintf(stderr, "vptr starts out as %x\n", vptr);
-  // fprintf(stderr, "nleft starts out as %d\n", nleft);
-  // fprintf(stderr, "ptr starts out as %x\n", ptr);
 
   while (nleft > 0) {
 #ifndef __APPLE__
