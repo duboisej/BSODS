@@ -106,7 +106,7 @@ Comments/Notes:
 RPC functionality tests are being halted by this slen issue. In order to tests the RPC
 functionality, we need to resolve this slen issue.
 
-Sat Feb 18 17:32:00 EST 2013
+Mon Feb 18 17:32:00 EST 2013
 Attendees: Ethan DuBois, Niko Konstantakos
 Questions:
 1) Why is the server not receiving RPC's?
@@ -117,3 +117,18 @@ Decisions:
 Comments/Notes:
 We tested and fixed RPC functionality and began testing event
 handling. Also, added commands to send RPC replies.
+
+Tue Feb 19 17:32:00 EST 2013
+Attendees: Ethan DuBois, Eddie Rivas
+Questions:
+1) How do we marshall/unmarshall properly?
+2) What's causing the events to fail?
+Decisions:
+1) Revisited the FD passing, realized there was a mistake which was causing the event channels to be used improperly.
+2) Fixed the FD's.
+3) Got events to work.
+4) Created a test event handler and got it to work.
+Comments/Notes:
+In the process of getting events to work, we fixed some file descriptor mismatches and broke the RPC
+send/receive (goddamnit). Will have to revisit RPC handling and why the way we're marshalling/unmarshalling
+is causing this new failure.
