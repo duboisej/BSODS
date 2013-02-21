@@ -369,7 +369,7 @@ proto_session_rpc(Proto_Session *s)
 
    if (proto_session_send_msg(s, 1) != -1)
    {
-      fprintf(stderr, "Sent message correctly in proto_session_rpc.\n");
+      //fprintf(stderr, "Sent message correctly in proto_session_rpc.\n");
       rc = proto_session_rcv_msg(s);
    }
    else
