@@ -29,25 +29,18 @@
 
 #define STRLEN 81
 
-struct LineBuffer {
-  char data[BUFLEN];
-  int  len;
-  int  newline;
-};
-
 struct Globals {
-  struct LineBuffer in;
-  char server[STRLEN];
+  char host[STRLEN];
   PortType port;
-  FDType serverFD;
-  int connected;
-  int verbose;
 } globals;
+
 
 typedef struct ClientState  {
   int data;
   Proto_Client_Handle ph;
 } Client;
+
+char board[9];
 
 static int
 clientInit(Client *C)
@@ -97,7 +90,7 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 int
 prompt(int menu) 
 {
-  static char MenuString[] = "\n?> ";
+  static char MenuString[] = "\nclient> ";
   int ret;
   int c=0;
 
@@ -251,75 +244,82 @@ initGlobals(int argc, char **argv)
 
 }
 
-static int
-testEvent(Proto_Session *s)
+static int 
+printBoard()
 {
-  fprintf(stderr, "Received test event! OMGLOL!!!");
-  return 1;
+  //printf("Fuck you, Niko.\n");
+  printf("%c|%c|%c\n", board[0], board[1], board[2]);
+  printf("-----\n");
+  printf("%c|%c|%c\n", board[3], board[4], board[5]); 
+  printf("-----\n");
+  printf("%c|%c|%c\n", board[6], board[7], board[8]);
+
+
 }
 
-static void
-printMenu()
+static int
+updateBoard(Proto_Session *s)
 {
-  printf("Your options are: \nconnect <ip:port> (to connect to a server)\n");
-  printf("disconnect (to disconnect from the server)\n");
-  printf("<Enter key> (display current game board)\n");
-  printf("[0-9] (mark the appropriate cell)\n");
-  printf("where (display <ip:port> of the server you are connected to).\n");
-  printf("quit (to quit client)");
+  //fprintf(stderr, "Called updateBoard, bitch.\n");
+  int rc = 1;
+  int i;
+  //int offset = 0;
+  // for (i = 0; i < 9; i++)
+  // {
+  //   fprintf(stderr, "%c, ", s->rbuf[i]);
+  // }
+  fprintf(stderr, "\n");
+  for (i = 0; i < 9; i++)
+  {
+    board[i] = s->rbuf[i];
+    //fprintf(stderr, "Unmarshalled char number %c : %c", i, *unmarshalled);
+  }
 
+  printBoard();
+   return 1;
 }
 
 int 
 main(int argc, char **argv)
 {
+
   Client c;
-  printf("Welcome to Tic-Tac-Toe!\n");
-  printMenu();
+
+  // int i;
+  // for (i = 0; i < 9; i++)
+  // {
+  //   c.board[i] = i+49;
+  // }
+
+  // printBoard(&c);
+
+
+  initGlobals(argc, argv);
+
+  if (clientInit(&c) < 0) {
+    fprintf(stderr, "ERROR: clientInit failed\n");
+    return -1;
+  } 
+
+  //printf("Finished client_init"); 
+
+  // ok startup our connection to the server
+  if (startConnection(&c, globals.host, globals.port, update_event_handler)<0) {
+    fprintf(stderr, "ERROR: startConnection failed\n");
+    return -1;
+  }
+
+  //fprintf(stderr, "Address of Client c is now %x\n", &c);
+
+  Proto_MT_Handler h;
+  //fprintf(stderr, "Got past declaration.\n");
+  h = &updateBoard;
+  //fprintf(stderr, "Got past assignment of testEvent function\n");
+  proto_client_set_event_handler(c.ph, PROTO_MT_EVENT_BASE_UPDATE, h);
+  //fprintf(stderr, "got past set_event_handler call\n");
 
   shell(&c);
 
   return 0;
 }
-
-// Stuff from Assignment 1
-
-// int 
-// doCmd(void)
-// {
-//   int rc = 1;
-
-//   if (strlen(globals.in.data)==0) return rc;
-//   else if (strncmp(globals.in.data, "connect", 
-//        sizeof("connect")-1)==0) rc = doConnect();
-//   else if (strncmp(globals.in.data, "send", 
-//        sizeof("send")-1)==0) rc = doSend();
-//   else if (strncmp(globals.in.data, "quit", 
-//        sizeof("quit")-1)==0) rc = doQuit();
-//   else if (strncmp(globals.in.data, "verbose", 
-//        sizeof("verbose")-1)==0) rc = doVerbose();
-//   else printf("Unknown Command\n");
-
-//   return rc;
-// }
-
-// int
-// main(int argc, char **argv)
-// {
-//   int rc, menu=1;
-
-//   bzero(&globals, sizeof(globals));
-
-//   while (1) {
-//     if (prompt(menu)>=0) rc=doCmd(); else rc=-1;
-//     if (rc<0) break;
-//     //What do you think the next line is for
-//     if (rc==1) menu=1; else menu=0;
-//   }
-
-//   VPRINTF("Exiting\n");
-//   fflush(stdout);
-
-//   return 0;
-// }
 

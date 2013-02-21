@@ -29,9 +29,11 @@
   #include "../lib/protocol_utils.h"
 
   struct {
-    int player1RPC;
-    int player2RPC;
+    int player1;
+    int player2;
   } Players;
+
+  int board[9];
 
   int 
   doUpdateClients(void)
@@ -42,6 +44,19 @@
     s = proto_server_event_session();
     hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
     proto_session_hdr_marshall(s, &hdr);
+    int i;
+    for (i = 0; i < 9; i++)
+    {
+
+      proto_session_body_marshall_char(s, (char) board[i]);
+    }
+
+    for (i = 0; i < 9; i++)
+    {
+    fprintf(stderr, "%c, ", s->sbuf[i]);
+    }
+
+
     proto_server_post_event();  
     return 1;
   }
@@ -108,15 +123,15 @@
 
   int clientHello(Proto_Session *s)
   {
-    int rc;
-    if (player1 == 0)
-    {
-      player1 = s->fd;
-    }
-    else
-    {
-      player2 = s->fd;
-    }
+     int rc;
+    // if (player1 == 0)
+    // {
+    //   player1 = s->fd;
+    // }
+    // else
+    // {
+    //   player2 = s->fd;
+    // }
 
 
     Proto_Msg_Hdr h;
@@ -143,13 +158,13 @@
     return rc;
   }
 
-  int announcePlayer(int playernum)
-  {
-    Proto_Session *s = proto_server_event_session();
-    Proto_Msg_Hdr h = s->shdr;
-    h.type = PROTO_MT_EVENT_BASE_UPDATE;
-    proto_server_post_event;
-  }
+  // int announcePlayer(int playernum)
+  // {
+  //   Proto_Session *s = proto_server_event_session();
+  //   Proto_Msg_Hdr h = s->shdr;
+  //   h.type = PROTO_MT_EVENT_BASE_UPDATE;
+  //   proto_server_post_event;
+  // }
 
   int printGoodbye(Proto_Session *s)
   {
@@ -182,7 +197,16 @@
     fprintf(stderr, "RPC Port: %d, Event Port: %d\n", proto_server_rpcport(), 
   	  proto_server_eventport());
 
-    printf("Finished.");
+    //printf("Finished.");
+
+    // initialize game board
+    int i;
+    for (i = 0; i < 9; i++)
+    {
+      board[i] = i+49;
+    }
+
+    board[5] = (int) 'X';
 
     if (proto_server_start_rpc_loop()<0) {
       fprintf(stderr, "ERROR: failed to start rpc loop\n");

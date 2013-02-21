@@ -171,7 +171,7 @@
                 //fprintf(stderr, "Got fd #%d from index %d\n", Proto_Server.EventSession.fd, i);
                 if (Proto_Server.EventSession.fd != -1) {
                   num--;
-                  int unmarshalled = ntohl(Proto_Server.EventSession.shdr.type);
+                  //int unmarshalled = ntohl(Proto_Server.EventSession.shdr.type);
                   //fprintf(stderr, "Server Event Session shdr mt = %d\n", unmarshalled);
                   //fprintf(stderr, "Server Event Session shdr blen = %d\n", Proto_Server.EventSession.shdr.blen);
                   if (proto_session_send_msg(&Proto_Server.EventSession, 0)<0) {

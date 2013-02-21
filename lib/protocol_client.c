@@ -124,6 +124,7 @@ proto_client_event_dispatcher(void * arg)
   for (;;) {
     if (proto_session_rcv_msg(s)==1) {
       mt = proto_session_hdr_unmarshall_type(s);
+      // unmarshall body
       if (mt > PROTO_MT_EVENT_BASE_RESERVED_FIRST && 
 	       mt < PROTO_MT_EVENT_BASE_RESERVED_LAST) {
 	       hdlr = c->base_event_handlers[mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST];
