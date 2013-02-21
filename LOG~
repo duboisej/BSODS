@@ -132,19 +132,3 @@ Comments/Notes:
 In the process of getting events to work, we fixed some file descriptor mismatches and broke the RPC
 send/receive (goddamnit). Will have to revisit RPC handling and why the way we're marshalling/unmarshalling
 is causing this new failure.
-
-Wed Feb 20 21:32:23 EST 2013
-Attendees: Ethan DuBois, Eddie Rivas, Niko Konstantakos
-Questions:
-1) Why was the RPC functionality broken?
-2) Game logic in general
-Decisions:
-1) Fixed Event and RPC channels
-2) Decided to begin coding game logic
-Comments/Notes:
-We fixed the RPC functionality - it had marshalling issues. We also tested
-RPCs and Events to make sure that the server was associating the correct
-file descriptors with the correct clients. We connected multiple clients
-from different machines to make sure that events were being posted
-correctly. Then we started thinking about the game logic and how to use all
-of the stuff we have.
