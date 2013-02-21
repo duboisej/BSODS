@@ -232,12 +232,13 @@
               for (;;) {
                 //fprintf(stderr, "got here");
                 if (proto_session_rcv_msg(&s)==1) {
-                  //fprintf(stderr, "Got inside the if statement.\n");
-                  //mt = proto_session_hdr_unmarshall_type(&s);
+                  fprintf(stderr, "Got inside the if statement.\n");
+                  mt = proto_session_hdr_unmarshall_type(&s);
 
                   if (mt > PROTO_MT_REQ_BASE_RESERVED_FIRST && 
                   mt < PROTO_MT_REQ_BASE_RESERVED_LAST)
                   {
+                    fprintf(stderr, "Received message type %d\n", mt);
                     //fprintf(stderr, "Good mt = %d", mt);
                     hdlr = Proto_Server.base_req_handlers[mt];
                     //fprintf(stderr, "Set hdlr to request handler.\n");
