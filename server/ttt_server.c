@@ -28,15 +28,15 @@
   #include "../lib/protocol_server.h"
   #include "../lib/protocol_utils.h"
 
-  struct {
-    int player1;
-    int player2;
-  } Players;
 
-  int board[9];
+  int player1;
+  int player2;
+  int turn;
+
+  int board[10];
 
   int 
-  doUpdateClients(void)
+  updateEvent(void)
   {
     Proto_Session *s;
     Proto_Msg_Hdr hdr;
@@ -45,20 +45,18 @@
     hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
     proto_session_hdr_marshall(s, &hdr);
     int i;
-    for (i = 0; i < 9; i++)
+    for (i = 0; i < 10; i++)
     {
-
       proto_session_body_marshall_char(s, (char) board[i]);
     }
 
-    for (i = 0; i < 9; i++)
+    for (i = 0; i < 10; i++)
     {
     fprintf(stderr, "%c, ", s->sbuf[i]);
     }
 
 
     proto_server_post_event();  
-    return 1;
   }
 
   char MenuString[] =
@@ -77,7 +75,7 @@
       proto_debug_off();
       break;
     case 'u':
-      rc = doUpdateClients();
+      rc = updateEvent();
       break;
     case 'q':
       rc=-1;
@@ -123,68 +121,242 @@
 
   int clientHello(Proto_Session *s)
   {
-     int rc;
-    // if (player1 == 0)
-    // {
-    //   player1 = s->fd;
-    // }
-    // else
-    // {
-    //   player2 = s->fd;
-    // }
-
-
+    int rc;
+    int player;
     Proto_Msg_Hdr h;
-
-                // setup dummy reply header : set correct reply message type and 
-                // everything else empty
     bzero(&h, sizeof(s));
-    h.type = proto_session_hdr_unmarshall_type(s);
-    h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-    proto_session_hdr_marshall(s, &h);
-
-                // setup a dummy body that just has a return code 
-    proto_session_body_marshall_int(s, 0xdeadbeef);
-
-    rc=proto_session_send_msg(s,1);
-
-
-    // bzero(&h, sizeof(s));
-    // h.type = PROTO_MT_EVENT_BASE_UPDATE;
-    // //rc=proto_session_send_msg(s,1);
+    if (player1 == 0)
+    {
+      
+      player1 = s->fd;
+      // send back Hello reply with player number
+      h.type = PROTO_MT_REP_BASE_HELLO;
+      proto_session_hdr_marshall(s, &h);
+      proto_session_body_marshall_char(s, 'X'); // send Hello reply indicating that client is player 1
+      proto_session_dump(s);
+      //fprintf(stderr, "Sending reply back on fd %d", s->fd);
+      rc = proto_session_send_msg(s, 1);
+      fprintf(stderr, "Player number 1 connected and said hi from fd %d\n", s->fd);
+      
+    }
+    else
+    {
+      player2 = s->fd;
+      // send back Hello reply with player number
+      h.type = PROTO_MT_REP_BASE_HELLO;
+      proto_session_hdr_marshall(s, &h);
+      proto_session_body_marshall_char(s, 'O'); // send Hello reply indicating that client is player 2
+      rc = proto_session_send_msg(s, 1);
+      fprintf(stderr, "Player number 2 connected and said hi from fd %d\n", s->fd);
+    }
 
     proto_server_post_event();
 
     return rc;
   }
 
-  // int announcePlayer(int playernum)
-  // {
-  //   Proto_Session *s = proto_server_event_session();
-  //   Proto_Msg_Hdr h = s->shdr;
-  //   h.type = PROTO_MT_EVENT_BASE_UPDATE;
-  //   proto_server_post_event;
-  // }
-
   int printGoodbye(Proto_Session *s)
   {
-    int rc;
-    Proto_Msg_Hdr h;
-   fprintf(stderr, "Client on fd # %d says goodbye :'( \n", s->fd);
-
-                // setup dummy reply header : set correct reply message type and 
-                // everything else empty
-    bzero(&h, sizeof(s));
-    h.type = proto_session_hdr_unmarshall_type(s);
-    h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-    proto_session_hdr_marshall(s, &h);
-
-                // setup a dummy body that just has a return code 
-    proto_session_body_marshall_int(s, 0xdeadbeef);
+    int rc = 0;
 
 
     return rc;
   }
+
+  int playerMove(Proto_Session *s)
+  {
+    int rc; 
+    int fd;
+    int player;
+    Proto_Msg_Hdr h;
+    bzero(&h, sizeof(s));
+
+    if (s->fd == player1)
+    {
+      player = 1;
+    } 
+    else 
+    {
+      player = 2;
+    }
+
+    if (player != turn)
+    {
+      // set up "Not your turn" reply and send
+      h.type = PROTO_MT_REP_BASE_MOVE;
+      proto_session_hdr_marshall(s, &h);
+
+      proto_session_body_marshall_int(s, 1); // 1 in body indicates not your turn 
+      rc=proto_session_send_msg(s,1);
+    }
+    else 
+    {
+
+      int move = (int) (s->rbuf[0]);
+      int index = checkValidMove(move);
+      if (index == -1)
+      {
+        // set up "Not a valid move" reply
+        bzero(&h, sizeof(s));
+        h.type = PROTO_MT_REP_BASE_MOVE;
+        proto_session_hdr_marshall(s, &h);
+
+        proto_session_body_marshall_int(s, 2); // 2 in body indicates invalid move
+        rc=proto_session_send_msg(s,1);
+      }
+      else
+      {
+        if (player == 1)
+          board[index] = 88;
+        else
+          board[index] = 79;
+
+        int win = checkwin();
+        board[9] = win;
+
+        rc = updateEvent();
+        printBoard();
+      }
+    }
+    return rc;
+  }
+
+  int
+  checkwin(void)
+  {
+
+    int num = board[0] + board[1] + board[2]; // top horizontal
+    if(num == 237 || num == 264) {
+
+      if (num == 237){
+        //O’s Won
+        return 0;
+      } else {
+        return 1;
+      }
+    }
+
+    num = board[3] + board[4] + board[5]; // middle horizontal
+    if(num == 237 || num == 264) {
+      if (num == 237){
+        //O’s Won
+        return 0;
+      } else {
+        //X’s Won
+        return 1;
+      }
+
+    } 
+
+    num = board[6] + board[7] + board[8]; // bottom horizontal
+    if(num == 237 || num == 264) {
+      if (num == 237){
+        //O’s Won
+        return 0;
+      } else {
+        //X’s Won
+        return 1;
+      }
+    } 
+
+    num = board[0] + board[4] + board[8]; // left to right diagonal
+    if(num == 237 || num == 264) {
+      if (num == 237){
+        //O’s Won
+        return 0;
+      } else {
+        //X’s Won
+        return 1;
+      }
+    } 
+
+    num = board[2]+ board[4] + board[6]; // right to left diagonal
+    if(num == 237 || num == 264) {
+      if (num == 237){
+        //O’s Won
+        return 0;
+      } else {
+        //X’s Won
+        return 1;
+      }
+    } 
+
+    num = board[0] + board[3] + board[6]; // left vertical
+    if(num == 237 || num == 264) {
+      if (num == 237){
+        //O’s Won
+        return 0;
+      } else {
+        //X’s Won
+        return 1;
+      }
+    } 
+
+    num = board[1] + board[4] + board[7]; // middle vertical
+    if(num== 237 || num == 264) {
+      if (num == 237){
+        //O’s Won
+        return 0;
+      } else {
+        //X’s Won
+        return 1;
+      }
+    } 
+
+    num = board[2] + board[5] + board[8]; // right vertical
+    if(num == 237 || num == 264) {
+      if (num == 237){
+        //O’s Won
+        return 0;
+      } else {
+        //X’s Won
+        return 1;
+      }
+    }
+
+    num = 0; 
+    int i; 
+    for (i = 0; i < 9; i++)
+    {
+      num += board[i];
+    }
+    if (num == 756)  // It's a draw - the board is full
+    {
+      return 2;
+    }
+
+    return -1;
+
+  }
+
+  int
+  checkValidMove(int cell)
+  {
+    if (cell < 49 || cell > 57)
+    {
+      return -1;
+    }
+    else if (board[cell - 49] == 88 || board[cell - 49] == 79)
+    {
+      return -1;
+    }
+    return (cell - 49);
+  }
+
+  int 
+  printBoard()
+  {
+    //printf("Fuck you, Niko.\n");
+    printf("%c|%c|%c\n", board[0], board[1], board[2]);
+    printf("-----\n");
+    printf("%c|%c|%c\n", board[3], board[4], board[5]); 
+    printf("-----\n");
+    printf("%c|%c|%c\n", board[6], board[7], board[8]);
+    printf("board[9] = %c\n", board[9]);
+
+
+  }
+
 
   int
   main(int argc, char **argv)
@@ -206,7 +378,30 @@
       board[i] = i+49;
     }
 
-    board[5] = (int) 'X';
+    // board[5] = (int) 'O';
+    // board[4] = (int) 'O';
+    // board[3] = (int) 'O';
+
+    // board[9] = -1;
+
+    // int won = checkwin();
+
+    // if (won == -1)
+    // {
+    //   printf("No win.");
+    // }
+    // else if (won == 0)
+    // {
+    //   printf("O's win!");
+    // }
+    // else if (won == 1)
+    // {
+    //   printf("X's win!");
+    // }
+    // else 
+    // {
+    //   printf("There was an error in the function.");
+    // }
 
     if (proto_server_start_rpc_loop()<0) {
       fprintf(stderr, "ERROR: failed to start rpc loop\n");
@@ -215,8 +410,9 @@
 
     Proto_MT_Handler h = &clientHello;
     proto_server_set_req_handler(PROTO_MT_REQ_BASE_HELLO, h);
-    Proto_MT_Handler g = &printGoodbye;
-    proto_server_set_req_handler(PROTO_MT_REQ_BASE_GOODBYE, g);
+    Proto_MT_Handler m = &playerMove;
+    proto_server_set_req_handler(PROTO_MT_REQ_BASE_MOVE, h);
+
       
     shell(NULL);
 

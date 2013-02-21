@@ -203,16 +203,16 @@ proto_session_body_marshall_int(Proto_Session *s, int v)
 extern int 
 proto_session_body_unmarshall_int(Proto_Session *s, int offset, int *v)
 {
-  fprintf(stderr, "Got inside body_unmarshall_int\n");
+  //fprintf(stderr, "Got inside body_unmarshall_int\n");
   if (s && ((s->rlen  - (offset + sizeof(int))) >=0 )) {
-    fprintf(stderr, "Got inside if statement.\n");
+    //fprintf(stderr, "Got inside if statement.\n");
     *v = *((int *)(s->rbuf + offset));
-    fprintf(stderr, "Interpreted integer at (s->rbuf + offset)\n");
+    //fprintf(stderr, "Interpreted integer at (s->rbuf + offset)\n");
     *v = htonl(*v);
-    fprintf(stderr, "Unmarshalled integer\n");
+    //fprintf(stderr, "Unmarshalled integer\n");
     return offset + sizeof(int);
   }
-  fprintf(stderr, "Returned -1 NOOOOOOO\n");
+  //fprintf(stderr, "Returned -1 NOOOOOOO\n");
   return -1;
 }
 
@@ -287,9 +287,9 @@ extern  int
 proto_session_send_msg(Proto_Session *s, int reset)
 {
   //NYI();
-  fprintf(stderr, "Before marshaling, slen = %d\n", s->slen);
+  //fprintf(stderr, "Before marshaling, slen = %d\n", s->slen);
   s->shdr.blen = htonl(s->slen);
-  fprintf(stderr, "After marshaling, slen (or s->shdr.blen) = %d\n", s->shdr.blen);
+  //fprintf(stderr, "After marshaling, slen (or s->shdr.blen) = %d\n", s->shdr.blen);
 
   // write request
   // changed
@@ -310,7 +310,7 @@ proto_session_send_msg(Proto_Session *s, int reset)
   // fprintf(stderr, "Wrote version: %d", s->shdr.version);
   // fprintf(stderr, "Wrote blen: %d", s->shdr.blen);
 
-  fprintf(stderr, "Before sending, sbuf = ");
+  //fprintf(stderr, "Before sending, sbuf = ");
   int i;
   for (i = 0; i < 9; i++)
   {
@@ -352,9 +352,9 @@ proto_session_rcv_msg(Proto_Session *s)
   else if (ret != 0)
   {
     proto_dump_msghdr(&(s->rhdr));
-    fprintf(stderr, "Received message type: %d\n", s->rhdr.type);
-    fprintf(stderr, "Received version: %d\n", s->rhdr.version);
-    fprintf(stderr, "Received blen: %d\n", s->rhdr.blen);
+    //fprintf(stderr, "Received message type: %d\n", s->rhdr.type);
+    //fprintf(stderr, "Received version: %d\n", s->rhdr.version);
+    //fprintf(stderr, "Received blen: %d\n", s->rhdr.blen);
   }
 
   int newblen = ntohl(s->rhdr.blen);
