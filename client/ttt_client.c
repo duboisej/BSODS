@@ -241,8 +241,11 @@ doDisconnect(Client* C)
     printf("You are not connected to a server.\n");
     return 1;
   }
+  if (globals.playersymbol != 'S')
+  {
 	//Send a goodbye message to server. Don't wait for a reply.
-	proto_client_goodbye(C->ph);
+	   proto_client_goodbye(C->ph);
+  }
 	//Close both sockets (fd's)
   printf("Game Over: You Quit\n");
 	Proto_Session* srpc = proto_client_rpc_session(C->ph);
@@ -368,7 +371,6 @@ updateBoard(Proto_Session *s)
 {
   int rc = 1;
   int i;
-  fprintf(stderr, "\n");
   int same = 1;
 
   // check if board needs to be updated
@@ -387,6 +389,7 @@ updateBoard(Proto_Session *s)
 
   if (same == 0)
   {
+    fprintf(stderr, "\n");
     printBoard();
   }
 
