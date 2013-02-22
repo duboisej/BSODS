@@ -90,7 +90,7 @@ static int
 proto_client_session_lost_default_hdlr(Proto_Session *s)
 {
   fprintf(stderr, "Session lost...:\n");
-  proto_session_dump(s);
+  //proto_session_dump(s);
   return -1;
 }
 
@@ -99,7 +99,7 @@ proto_client_event_null_handler(Proto_Session *s)
 {
   fprintf(stderr, 
 	  "proto_client_event_null_handler: invoked for session:\n");
-  proto_session_dump(s);
+  //proto_session_dump(s);
 
   return 1;
 }
@@ -135,7 +135,7 @@ proto_client_event_dispatcher(void * arg)
           }
           else
           {
-            
+
           }
       }
     }

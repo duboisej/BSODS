@@ -147,10 +147,30 @@
     return rc;
   }
 
-  int printGoodbye(Proto_Session *s)
+  int playerGoodbye(Proto_Session *s)
   {
     int rc = 0;
+    int player = 0;
+    if (s->fd == player1)
+    {
+      player = 1;
+    } 
+    else 
+    {
+      player = 2;
+    }
 
+    if (player == 1)
+    {
+      proto_server_remove_event_subscriber(0);
+    } 
+    else
+    {
+      proto_server_remove_event_subscriber(1);
+    }
+    board[9] = 3;
+    updateEvent();
+    exit(0);
 
     return rc;
   }
@@ -179,7 +199,7 @@
       h.type = PROTO_MT_REP_BASE_MOVE;
       proto_session_hdr_marshall(s, &h);
 
-      proto_session_body_marshall_int(s, 1); // 1 in body indicates not your turn 
+      proto_session_body_marshall_char(s, 'N'); // 'N' in body indicates not your turn 
       rc=proto_session_send_msg(s,1);
     }
     else 
@@ -194,7 +214,7 @@
         h.type = PROTO_MT_REP_BASE_MOVE;
         proto_session_hdr_marshall(s, &h);
 
-        proto_session_body_marshall_int(s, 2); // 2 in body indicates invalid move
+        proto_session_body_marshall_char(s, 'I'); // 'I' in body indicates invalid move
         rc=proto_session_send_msg(s,1);
       }
       else
@@ -214,7 +234,7 @@
         bzero(&h, sizeof(s));
         h.type = PROTO_MT_REP_BASE_MOVE;
         proto_session_hdr_marshall(s, &h);
-        proto_session_body_marshall_int(s, 0); // 2 in body indicates invalid move
+        proto_session_body_marshall_int(s, 0); // 0 in body indicates good move.
         rc=proto_session_send_msg(s,1);
 
         // send update event to all participants
@@ -383,40 +403,18 @@
     }
     board[9] = -1;
 
-    // board[5] = (int) 'O';
-    // board[4] = (int) 'O';
-    // board[3] = (int) 'O';
-
-    // board[9] = -1;
-
-    // int won = checkwin();
-
-    // if (won == -1)
-    // {
-    //   printf("No win.");
-    // }
-    // else if (won == 0)
-    // {
-    //   printf("O's win!");
-    // }
-    // else if (won == 1)
-    // {
-    //   printf("X's win!");
-    // }
-    // else 
-    // {
-    //   printf("There was an error in the function.");
-    // }
-
     if (proto_server_start_rpc_loop()<0) {
       fprintf(stderr, "ERROR: failed to start rpc loop\n");
       exit(-1);
     }
 
+
     Proto_MT_Handler h = &playerHello;
     proto_server_set_req_handler(PROTO_MT_REQ_BASE_HELLO, h);
     Proto_MT_Handler m = &playerMove;
     proto_server_set_req_handler(PROTO_MT_REQ_BASE_MOVE, m);
+    Proto_MT_Handler g = &playerGoodbye;
+    proto_server_set_req_handler(PROTO_MT_REQ_BASE_GOODBYE, g);
 
       
     shell(NULL);

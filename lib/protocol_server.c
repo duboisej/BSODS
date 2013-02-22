@@ -87,6 +87,22 @@
               }
             }
 
+            extern int
+            proto_server_remove_event_subscriber(int index)
+            {
+              int rc;
+              if (index >= 0 && index < PROTO_SERVER_MAX_EVENT_SUBSCRIBERS)
+              {
+                Proto_Server.EventSubscribers[index] = -1;
+                rc = 1;
+              }
+              else
+              {
+                rc = -1;
+              }
+              return rc;
+            }
+
 
             static int
             proto_server_record_event_subscriber(int fd, int *num)

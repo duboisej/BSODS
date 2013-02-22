@@ -209,14 +209,14 @@ doMark(Client* C, char cell)
   // Handle replies
   Proto_Session *s = proto_client_rpc_session(C->ph);
   proto_session_hdr_unmarshall(s, &(s->rhdr));
-  int replycode = ntohl(s->rbuf[0]);
-  fprintf(stderr, "reply code was %d\n", replycode);
+  char replycode = s->rbuf[0];
+  //fprintf(stderr, "reply code was %c\n", replycode);
 
-  if (replycode == 1)
+  if (replycode == 'N')
   {
     printf("Not your turn yet!");
   }
-  else if (replycode == 2)
+  else if (replycode == 'I')
   {
     printf("Not a valid move!");
   }
@@ -228,17 +228,23 @@ doMark(Client* C, char cell)
 int
 doDisconnect(Client* C)
 {
-	fprintf(stderr, "Inside dc method");
-	//Send a dc message to server
-	
+  if (globals.connected == 0)
+  {
+    printf("You are not connected to a server.\n");
+    return 1;
+  }
+	//fprintf(stderr, "Inside dc method");
+	//Send a goodbye message to server. Don't wait for a reply
+	proto_client_goodbye(C->ph);
 	//Close both sockets (fd's)
+  printf("Game Over: You Quit\n");
 	Proto_Session* srpc = proto_client_rpc_session(C->ph);
 	Proto_Session* sevent = proto_client_event_session(C->ph);
-	fprintf(stderr, "RPC fd = %d", srpc->fd);
-	fprintf(stderr, "Event fd = %d", sevent->fd);
+	fprintf(stderr, "RPC fd = %d\n", srpc->fd);
+	fprintf(stderr, "Event fd = %d\n", sevent->fd);
 	close(srpc->fd);
 	close(sevent->fd);
-	fprintf(stderr, "Disconnecting from server.");
+	fprintf(stderr, "Disconnecting from server.\n");
 	globals.connected = 0;
 	printMenu();
 	return 1;
@@ -381,6 +387,11 @@ updateBoard(Proto_Session *s)
   else if (board[9] == 2)
   {
     printf("Game Over: Draw. :/\n");
+    exit(0);
+  }
+  else if (board[9] == 3)
+  {
+    printf("Game Over: Other Side Quit\n");
     exit(0);
   }
   else
