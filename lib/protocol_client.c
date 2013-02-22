@@ -128,17 +128,26 @@ proto_client_event_dispatcher(void * arg)
       if (mt > PROTO_MT_EVENT_BASE_RESERVED_FIRST && 
 	       mt < PROTO_MT_EVENT_BASE_RESERVED_LAST) {
 	       hdlr = c->base_event_handlers[mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST];
-	       if (hdlr(s)<0) goto leave;
+	       if (hdlr(s)<0) 
+          {
+            //fprintf(stderr, "Boners.");
+            goto leave;
+          }
+          else
+          {
+            
+          }
       }
     }
     else 
     {
       //fprintf(stderr, "Proto_session_rcv_msg failed.");
-      c->session_lost_handler(&s);
+      c->session_lost_handler(s);
       goto leave;
     }
   }
  leave:
+  //fprintf(stderr, "Got inside leave.\n");
   close(s->fd);
   return NULL;
 }
@@ -218,15 +227,29 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   //fprintf(stderr, "In do_generic_dummy_rpc, s->slen = %d\n", s->slen);
   rc = proto_session_rpc(s);
 
-  if (rc==1) {
-    proto_session_body_unmarshall_int(s, 0, &rc);
-  } else {
-    
-  }
+  // if (rc==1) {
+  //   proto_session_body_unmarshall_int(s, 0, &rc);
+  // }
   
   return rc;
 
 }
+
+static int
+do_generic_rpc_char(Proto_Client_Handle ch, Proto_Msg_Types mt, char data)
+{
+  int rc;
+  Proto_Session *s;
+  Proto_Client *c = ch;
+  s = &(c->rpc_session);
+
+  s->shdr.type = PROTO_MT_REQ_BASE_MOVE;
+  proto_session_hdr_marshall(s, &(s->shdr));
+  proto_session_body_marshall_char(s, data);
+  rc = proto_session_rpc(s);
+  return rc;
+}
+
 extern int 
 proto_client_hello(Proto_Client_Handle ch)
 {
@@ -236,7 +259,7 @@ proto_client_hello(Proto_Client_Handle ch)
 extern int 
 proto_client_move(Proto_Client_Handle ch, char data)
 {
-  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_MOVE);  
+  return do_generic_rpc_char(ch,PROTO_MT_REQ_BASE_MOVE, data);  
 }
 
 extern int 

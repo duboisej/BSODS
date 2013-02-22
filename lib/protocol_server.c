@@ -137,12 +137,12 @@
 
               for (;;) {
                 connfd = net_accept(fd);
-                printf("First");
+                //printf("First");
                 if (connfd < 0) {
                   fprintf(stderr, "Error: EventListen accept failed (%d)\n", errno);
                 } else {
                   int i;
-                  printf("Second");
+                  //printf("Second");
                   fprintf(stderr, "EventListen: connfd=%d -> ", connfd);
 
                   if (proto_server_record_event_subscriber(connfd, &i) <0) {

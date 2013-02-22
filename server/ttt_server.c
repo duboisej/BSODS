@@ -31,7 +31,7 @@
 
   int player1;
   int player2;
-  int turn;
+  int turn = 1;
 
   int board[10];
 
@@ -49,13 +49,6 @@
     {
       proto_session_body_marshall_char(s, (char) board[i]);
     }
-
-    for (i = 0; i < 10; i++)
-    {
-    fprintf(stderr, "%c, ", s->sbuf[i]);
-    }
-
-
     proto_server_post_event();  
   }
 
@@ -119,7 +112,7 @@
     return NULL;
   }
 
-  int clientHello(Proto_Session *s)
+  int playerHello(Proto_Session *s)
   {
     int rc;
     int player;
@@ -133,7 +126,7 @@
       h.type = PROTO_MT_REP_BASE_HELLO;
       proto_session_hdr_marshall(s, &h);
       proto_session_body_marshall_char(s, 'X'); // send Hello reply indicating that client is player 1
-      proto_session_dump(s);
+      //proto_session_dump(s);
       //fprintf(stderr, "Sending reply back on fd %d", s->fd);
       rc = proto_session_send_msg(s, 1);
       fprintf(stderr, "Player number 1 connected and said hi from fd %d\n", s->fd);
@@ -148,9 +141,8 @@
       proto_session_body_marshall_char(s, 'O'); // send Hello reply indicating that client is player 2
       rc = proto_session_send_msg(s, 1);
       fprintf(stderr, "Player number 2 connected and said hi from fd %d\n", s->fd);
+      updateEvent();
     }
-
-    proto_server_post_event();
 
     return rc;
   }
@@ -165,6 +157,7 @@
 
   int playerMove(Proto_Session *s)
   {
+    fprintf(stderr, "PlayerMove got called.\n");
     int rc; 
     int fd;
     int player;
@@ -191,8 +184,8 @@
     }
     else 
     {
-
-      int move = (int) (s->rbuf[0]);
+      //fprintf(stderr, "It's player %d's turn (correct)\n", player);
+      int move = (int) (s->rbuf[0]); // get move from send buffer
       int index = checkValidMove(move);
       if (index == -1)
       {
@@ -212,8 +205,19 @@
           board[index] = 79;
 
         int win = checkwin();
+        fprintf(stderr, "Win variable = %d\n", win);
         board[9] = win;
+        if (turn == 1) turn = 2;
+        else turn = 1;
 
+        // send good (empty) reply
+        bzero(&h, sizeof(s));
+        h.type = PROTO_MT_REP_BASE_MOVE;
+        proto_session_hdr_marshall(s, &h);
+        proto_session_body_marshall_int(s, 0); // 2 in body indicates invalid move
+        rc=proto_session_send_msg(s,1);
+
+        // send update event to all participants
         rc = updateEvent();
         printBoard();
       }
@@ -352,7 +356,7 @@
     printf("%c|%c|%c\n", board[3], board[4], board[5]); 
     printf("-----\n");
     printf("%c|%c|%c\n", board[6], board[7], board[8]);
-    printf("board[9] = %c\n", board[9]);
+    printf("board[9] = %d\n", board[9]);
 
 
   }
@@ -377,6 +381,7 @@
     {
       board[i] = i+49;
     }
+    board[9] = -1;
 
     // board[5] = (int) 'O';
     // board[4] = (int) 'O';
@@ -408,10 +413,10 @@
       exit(-1);
     }
 
-    Proto_MT_Handler h = &clientHello;
+    Proto_MT_Handler h = &playerHello;
     proto_server_set_req_handler(PROTO_MT_REQ_BASE_HELLO, h);
     Proto_MT_Handler m = &playerMove;
-    proto_server_set_req_handler(PROTO_MT_REQ_BASE_MOVE, h);
+    proto_server_set_req_handler(PROTO_MT_REQ_BASE_MOVE, m);
 
       
     shell(NULL);

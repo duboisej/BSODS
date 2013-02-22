@@ -20,28 +20,6 @@
 * THE SOFTWARE.
 *****************************************************************************/
 
-/******************************************************************************
-* Copyright (C) 2011 by Jonathan Appavoo, Boston University
-*
-* Permission is hereby granted, free of charge, to any person obtaining a copy
-* of this software and associated documentation files (the "Software"), to deal
-* in the Software without restriction, including without limitation the rights
-* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-* copies of the Software, and to permit persons to whom the Software is
-* furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included in
-* all copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-* THE SOFTWARE.
-*****************************************************************************/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,7 +52,7 @@ typedef struct ClientState  {
   Proto_Client_Handle ph;
 } Client;
 
-char board[9];
+char board[10];
 
 int 
 getInput()
@@ -168,66 +146,6 @@ prompt(int menu)
   return len;
 }
 
-
-// FIXME:  this is ugly maybe the speration of the proto_client code and
-//         the game code is dumb
-/*int
-game_process_reply(Client *C)
-{
-  Proto_Session *s;
-
-  s = proto_client_rpc_session(C->ph);
-
-  fprintf(stderr, "%s: do something %p\n", __func__, s);
-
-  return 1;
-}*/
-
-
-/*int 
-doRPCCmd(Client *C, char c) 
-{
-  int rc=-1;
-
-  switch (c) {
-  case 'h':  
-    {
-      rc = proto_client_hello(C->ph);
-      printf("hello: rc=%x\n", rc);
-      if (rc > 0) game_process_reply(C);
-    }
-    break;
-  case 'm':
-    scanf("%c", &c);
-    rc = proto_client_move(C->ph, c);
-    break;
-  case 'g':
-    rc = proto_client_goodbye(C->ph);
-    break;
-  default:
-    printf("%s: unknown command %c\n", __func__, c);
-  }
-  // NULL MT OVERRIDE ;-)
-  printf("%s: rc=0x%x\n", __func__, rc);
-  if (rc == 0xdeadbeef) rc=1;
-  return rc;
-}
-
-int
-doRPC(Client *C)
-{
-  int rc;
-  char c;
-
-  printf("enter (h|m<c>|g): ");
-  scanf("%c", &c);
-  rc=doRPCCmd(C,c);
-
-  printf("doRPC: rc=0x%x\n", rc);
-
-  return rc;
-}*/
-
 int
 doConnect(Client *C) {
   int i, len = strlen(globals.in.data);
@@ -245,7 +163,7 @@ doConnect(Client *C) {
     if (strlen(globals.host)==0 || globals.port==0) {
       fprintf(stderr, "Missing server or port.\n");
     } else {
-      printf("connecting...");
+      //printf("connecting...");
       if (startConnection(C, globals.host, globals.port, update_event_handler)<0) {
     	  fprintf(stderr, "ERROR: startConnection failed\n");
           return -1;
@@ -256,17 +174,18 @@ doConnect(Client *C) {
 		    if (proto_client_hello(C->ph) > 0)
         {
           globals.playersymbol = s->rbuf[0];
-          printf("Connected to %s:%d: You are %c's", globals.host, globals.port, globals.playersymbol);
+          printf("Connected to %s:%d: You are %c's\n", globals.host, globals.port, globals.playersymbol);
         } 
         else
         {
-          fprintf(stderr, "No reply from server.");
+          fprintf(stderr, "No reply from server.\n");
           return -1;
         }
 
       }
     }
   }
+
   //VPRINTF("END: %s %d %d\n", globals.server, globals.port, globals.serverFD);
   return 1;
 }
@@ -282,6 +201,30 @@ doWhere(void) {
     return 1;
 }
 
+int
+doMark(Client* C, char cell)
+{
+  int rc;
+  rc = proto_client_move(C->ph, cell);
+  // Handle replies
+  Proto_Session *s = proto_client_rpc_session(C->ph);
+  proto_session_hdr_unmarshall(s, &(s->rhdr));
+  int replycode = ntohl(s->rbuf[0]);
+  fprintf(stderr, "reply code was %d\n", replycode);
+
+  if (replycode == 1)
+  {
+    printf("Not your turn yet!");
+  }
+  else if (replycode == 2)
+  {
+    printf("Not a valid move!");
+  }
+  
+  return rc;
+
+}
+
 int 
 docmd(Client *C)
 {
@@ -290,30 +233,32 @@ docmd(Client *C)
   if (strlen(globals.in.data)==0) return rc; //rc = doReprint();
   else if (strncmp(globals.in.data, "connect", 
 		   sizeof("connect")-1)==0) rc = doConnect(C);
-  /*else if (strncmp(globals.in.data, "disconnect",
-  		   sizeof("disconnect")-1==0) rc = doDisconnect();*/
-  /*else if (strncmp(globals.in.data, "1", 
-		   sizeof("1")-1)==0) rc = doMark(C);
+  // else if (strncmp(globals.in.data, "disconnect",
+  // 		   sizeof("disconnect")-1==0) rc = doDisconnect();
+  else if (strncmp(globals.in.data, "1", 
+		   sizeof("1")-1)==0) rc = doMark(C, '1');
   else if (strncmp(globals.in.data, "2", 
-		   sizeof("2")-1)==0) rc = doMark(C);
+		   sizeof("2")-1)==0) rc = doMark(C, '2');
   else if (strncmp(globals.in.data, "3", 
-		   sizeof("3")-1)==0) rc = doMark(C);
+		   sizeof("3")-1)==0) rc = doMark(C, '3');
   else if (strncmp(globals.in.data, "4", 
-		   sizeof("4")-1)==0) rc = doMark(C);
+		   sizeof("4")-1)==0) rc = doMark(C, '4');
   else if (strncmp(globals.in.data, "5", 
-		   sizeof("5")-1)==0) rc = doMark(C);
+		   sizeof("5")-1)==0) rc = doMark(C, '5');
   else if (strncmp(globals.in.data, "6", 
-		   sizeof("6")-1)==0) rc = doMark(C);
+		   sizeof("6")-1)==0) rc = doMark(C, '6');
   else if (strncmp(globals.in.data, "7", 
-		   sizeof("7")-1)==0) rc = doMark(C);
+		   sizeof("7")-1)==0) rc = doMark(C, '7');
   else if (strncmp(globals.in.data, "8", 
-		   sizeof("8")-1)==0) rc = doMark(C);
+		   sizeof("8")-1)==0) rc = doMark(C, '8');
   else if (strncmp(globals.in.data, "9", 
-		   sizeof("9")-1)==0) rc = doMark(C);*/
+		   sizeof("9")-1)==0) rc = doMark(C, '9');
   else if (strncmp(globals.in.data, "where", 
 		   sizeof("where")-1)==0) rc = doWhere();
   else if (strncmp(globals.in.data, "quit", 
 		   sizeof("quit")-1)==0) rc = -1;
+  else if (strncmp(globals.in.data, "help", 
+       sizeof("help")-1)==0) printMenu();
   else  printf("Unknown Command\n");
   
   return rc;
@@ -381,20 +326,49 @@ updateBoard(Proto_Session *s)
   //fprintf(stderr, "Called updateBoard, bitch.\n");
   int rc = 1;
   int i;
-  //int offset = 0;
-  // for (i = 0; i < 9; i++)
-  // {
-  //   fprintf(stderr, "%c, ", s->rbuf[i]);
-  // }
   fprintf(stderr, "\n");
-  for (i = 0; i < 9; i++)
+  for (i = 0; i < 10; i++)
   {
     board[i] = s->rbuf[i];
     //fprintf(stderr, "Unmarshalled char number %c : %c", i, *unmarshalled);
   }
-
   printBoard();
-   return 1;
+  if (board[9] == 1) // X's Won
+  {
+    if (globals.playersymbol == 'X')
+    {
+      printf("Game Over: You win!! :D\n");
+      exit(0);
+    } 
+    else 
+    {
+      printf("Game Over: You lose :'(\n");
+      exit(0);
+    }
+  }
+  else if (board[9] == 0) // O's Won
+  {
+    if (globals.playersymbol == 'O')
+    {
+      printf("Game Over: You win!! :D\n");
+      exit(0);
+    }
+    else 
+    {
+      printf("Game Over: You lose :'(\n");
+      exit(0);
+    }
+  }
+  else if (board[9] == 2)
+  {
+    printf("Game Over: Draw. :/\n");
+    exit(0);
+  }
+  else
+  {
+    return 1;
+  }
+  
 }
 
 int 
@@ -415,23 +389,6 @@ main(int argc, char **argv)
   Proto_MT_Handler h;
   h = &updateBoard;
   proto_client_set_event_handler(c.ph, PROTO_MT_EVENT_BASE_UPDATE, h);
-
-  /*
-  //printf("Finished client_init"); 
-
-  // ok startup our connection to the server
-  if (startConnection(&c, globals.host, globals.port, update_event_handler)<0) {
-    fprintf(stderr, "ERROR: startConnection failed\n");
-    return -1;
-  }
-  */
-
-  /*Proto_MT_Handler h;
-  //fprintf(stderr, "Got past declaration.\n");
-  h = &testEvent;
-  //fprintf(stderr, "Got past assignment of testEvent function\n");
-  proto_client_set_event_handler(c.ph, PROTO_MT_EVENT_BASE_UPDATE, h);
-  //fprintf(stderr, "got past set_event_handler call\n");*/
 
   shell(&c);
 

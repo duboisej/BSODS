@@ -312,10 +312,10 @@ proto_session_send_msg(Proto_Session *s, int reset)
 
   //fprintf(stderr, "Before sending, sbuf = ");
   int i;
-  for (i = 0; i < 9; i++)
-  {
-    fprintf(stderr, "%c ", s->sbuf[i]);
-  }
+  // for (i = 0; i < 9; i++)
+  // {
+  //   fprintf(stderr, "%c ", s->sbuf[i]);
+  // }
 
   if (net_writen(s->fd, &(s->sbuf), s->slen) == -1)
   {
@@ -337,6 +337,7 @@ extern int
 proto_session_rcv_msg(Proto_Session *s)
 {
   //NYI();
+
   
   proto_session_reset_receive(s);
 
@@ -351,7 +352,7 @@ proto_session_rcv_msg(Proto_Session *s)
   }
   else if (ret != 0)
   {
-    proto_dump_msghdr(&(s->rhdr));
+    //proto_dump_msghdr(&(s->rhdr));
     //fprintf(stderr, "Received message type: %d\n", s->rhdr.type);
     //fprintf(stderr, "Received version: %d\n", s->rhdr.version);
     //fprintf(stderr, "Received blen: %d\n", s->rhdr.blen);
