@@ -227,7 +227,7 @@ doMark(Client* C, char cell)
     }
     else 
     {
-      printf("You're a spectator. You can't move.\n")
+      printf("You're a spectator. You can't move.\n");
     }
   }
   else if (replycode == 'I')
@@ -396,7 +396,7 @@ updateBoard(Proto_Session *s)
     } 
     else
     {
-      printf("Game Over: X's Won.\n")
+      printf("Game Over: X's Won.\n");
     }
     exit(0);
   }
@@ -412,7 +412,7 @@ updateBoard(Proto_Session *s)
     }
     else
     {
-      printf("Game Over: O's Won.\n")
+      printf("Game Over: O's Won.\n");
     }
     exit(0);
   }
@@ -423,7 +423,7 @@ updateBoard(Proto_Session *s)
   }
   else if (board[9] == 3)
   {
-    if (playersymbol == 'X' || playersymbol == 'O')
+    if (globals.playersymbol == 'X' || globals.playersymbol == 'O')
     {
       printf("Game Over: Other Side Quit\n");
 
