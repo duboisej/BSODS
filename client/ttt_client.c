@@ -225,6 +225,25 @@ doMark(Client* C, char cell)
 
 }
 
+int
+doDisconnect(Client* C)
+{
+	fprintf(stderr, "Inside dc method");
+	//Send a dc message to server
+	
+	//Close both sockets (fd's)
+	Proto_Session* srpc = proto_client_rpc_session(C->ph);
+	Proto_Session* sevent = proto_client_event_session(C->ph);
+	fprintf(stderr, "RPC fd = %d", srpc->fd);
+	fprintf(stderr, "Event fd = %d", sevent->fd);
+	close(srpc->fd);
+	close(sevent->fd);
+	fprintf(stderr, "Disconnecting from server.");
+	globals.connected = 0;
+	printMenu();
+	return 1;
+}
+
 int 
 docmd(Client *C)
 {
@@ -233,8 +252,8 @@ docmd(Client *C)
   if (strlen(globals.in.data)==0) return rc; //rc = doReprint();
   else if (strncmp(globals.in.data, "connect", 
 		   sizeof("connect")-1)==0) rc = doConnect(C);
-  // else if (strncmp(globals.in.data, "disconnect",
-  // 		   sizeof("disconnect")-1==0) rc = doDisconnect();
+  else if (strncmp(globals.in.data, "disconnect",
+   		   sizeof("disconnect")-1)==0) rc = doDisconnect(C);
   else if (strncmp(globals.in.data, "1", 
 		   sizeof("1")-1)==0) rc = doMark(C, '1');
   else if (strncmp(globals.in.data, "2", 
