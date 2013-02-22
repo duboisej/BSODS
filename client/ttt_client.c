@@ -221,7 +221,14 @@ doMark(Client* C, char cell)
 
   if (replycode == 'N')
   {
-    printf("Not your turn yet!");
+    if (globals.playersymbol == 'X' || globals.playersymbol == 'O')
+    {
+      printf("Not your turn yet!");
+    }
+    else 
+    {
+      printf("You're a spectator. You can't move.\n")
+    }
   }
   else if (replycode == 'I')
   {
@@ -301,12 +308,9 @@ int doQuit(Client *C)
   if (globals.playersymbol == 'X' || globals.playersymbol == 'O')
   {
     proto_client_goodbye(C->ph);
-    printf("Game Over: You Quit\n");
   }
-  else
-  {
-    printf("Spectating Over: You disconnected.\n");
-  }
+  printf("You Quit.\n");
+  
   
   return -1;
 }
@@ -385,26 +389,32 @@ updateBoard(Proto_Session *s)
     if (globals.playersymbol == 'X')
     {
       printf("Game Over: You win!! :D\n");
-      exit(0);
     } 
-    else 
+    else if (globals.playersymbol == 'O')
     {
       printf("Game Over: You lose :'(\n");
-      exit(0);
+    } 
+    else
+    {
+      printf("Game Over: X's Won.\n")
     }
+    exit(0);
   }
   else if (board[9] == 0) // O's Won
   {
     if (globals.playersymbol == 'O')
     {
       printf("Game Over: You win!! :D\n");
-      exit(0);
     }
-    else 
+    else if (globals.playersymbol == 'O')
     {
       printf("Game Over: You lose :'(\n");
-      exit(0);
     }
+    else
+    {
+      printf("Game Over: O's Won.\n")
+    }
+    exit(0);
   }
   else if (board[9] == 2)
   {
@@ -413,7 +423,15 @@ updateBoard(Proto_Session *s)
   }
   else if (board[9] == 3)
   {
-    printf("Game Over: Other Side Quit\n");
+    if (playersymbol == 'X' || playersymbol == 'O')
+    {
+      printf("Game Over: Other Side Quit\n");
+
+    }
+    else
+    {
+      printf("A player quit the game.\n");
+    }
     exit(0);
   }
   else

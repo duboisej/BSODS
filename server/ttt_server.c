@@ -252,6 +252,10 @@
         // send update event to all participants
         rc = updateEvent();
         printBoard();
+        if (win != -1)
+        {
+          exit(0);
+        }
       }
     }
     return rc;
