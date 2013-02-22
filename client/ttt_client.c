@@ -150,7 +150,6 @@ int
 doConnect(Client *C) {
   int i, len = strlen(globals.in.data);
   Proto_Session *s;
-  //VPRINTF("BEGIN: %s\n", globals.in.data);
 
   if (globals.connected==1) {
     fprintf(stderr, "Already connected to server.\n");
@@ -163,13 +162,11 @@ doConnect(Client *C) {
     if (strlen(globals.host)==0 || globals.port==0) {
       fprintf(stderr, "Missing server or port.\n");
     } else {
-      //printf("connecting...");
       if (startConnection(C, globals.host, globals.port, update_event_handler)<0) {
     	  fprintf(stderr, "ERROR: startConnection failed\n");
           return -1;
       } else {
 		    globals.connected=1;
-		    //printf("connected to server!\n");
         s = proto_client_rpc_session(C->ph);
 		    if (proto_client_hello(C->ph) > 0)
         {
@@ -192,8 +189,6 @@ doConnect(Client *C) {
       }
     }
   }
-
-  //VPRINTF("END: %s %d %d\n", globals.server, globals.port, globals.serverFD);
   return 1;
 }
 
@@ -217,20 +212,19 @@ doMark(Client* C, char cell)
   Proto_Session *s = proto_client_rpc_session(C->ph);
   proto_session_hdr_unmarshall(s, &(s->rhdr));
   char replycode = s->rbuf[0];
-  //fprintf(stderr, "reply code was %c\n", replycode);
 
-  if (replycode == 'N')
+  if (replycode == 'N') // Not your turn yet
   {
-    if (globals.playersymbol == 'X' || globals.playersymbol == 'O')
+    if (globals.playersymbol == 'X' || globals.playersymbol == 'O') // Actual player
     {
       printf("Not your turn yet!");
     }
     else 
     {
-      printf("You're a spectator. You can't move.\n");
+      printf("You're a spectator. You can't move.\n"); // Spectator
     }
   }
-  else if (replycode == 'I')
+  else if (replycode == 'I') // Invalid move reply
   {
     printf("Not a valid move!");
   }
@@ -247,8 +241,7 @@ doDisconnect(Client* C)
     printf("You are not connected to a server.\n");
     return 1;
   }
-	//fprintf(stderr, "Inside dc method");
-	//Send a goodbye message to server. Don't wait for a reply
+	//Send a goodbye message to server. Don't wait for a reply.
 	proto_client_goodbye(C->ph);
 	//Close both sockets (fd's)
   printf("Game Over: You Quit\n");
@@ -361,7 +354,6 @@ initGlobals(void)
 static int 
 printBoard()
 {
-  //printf("Fuck you, Niko.\n");
   printf("%c|%c|%c\n", board[0], board[1], board[2]);
   printf("-----\n");
   printf("%c|%c|%c\n", board[3], board[4], board[5]); 
@@ -374,16 +366,31 @@ printBoard()
 static int
 updateBoard(Proto_Session *s)
 {
-  //fprintf(stderr, "Called updateBoard, bitch.\n");
   int rc = 1;
   int i;
   fprintf(stderr, "\n");
-  for (i = 0; i < 10; i++)
+  int same = 1;
+
+  // check if board needs to be updated
+  for (i = 0; i < 9; i++)
   {
-    board[i] = s->rbuf[i];
-    //fprintf(stderr, "Unmarshalled char number %c : %c", i, *unmarshalled);
+    char old = board[i];
+    char new = s->rbuf[i];
+    if (old != new)
+    {
+      board[i] = new;
+      same = 0;
+    }
   }
-  printBoard();
+  // grab the last cell 
+  board[9] = s->rbuf[9];
+
+  if (same == 0)
+  {
+    printBoard();
+  }
+
+  // Game win logic
   if (board[9] == 1) // X's Won
   {
     if (globals.playersymbol == 'X')
@@ -406,7 +413,7 @@ updateBoard(Proto_Session *s)
     {
       printf("Game Over: You win!! :D\n");
     }
-    else if (globals.playersymbol == 'O')
+    else if (globals.playersymbol == 'X')
     {
       printf("Game Over: You lose :'(\n");
     }
@@ -421,7 +428,7 @@ updateBoard(Proto_Session *s)
     printf("Game Over: Draw. :/\n");
     exit(0);
   }
-  else if (board[9] == 3)
+  else if (board[9] == 3) // One player quit
   {
     if (globals.playersymbol == 'X' || globals.playersymbol == 'O')
     {
@@ -456,6 +463,7 @@ main(int argc, char **argv)
   printf("Welcome to Tic Tac Toe!\n");
   printMenu();
 
+  // Add the update event handler
   Proto_MT_Handler h;
   h = &updateBoard;
   proto_client_set_event_handler(c.ph, PROTO_MT_EVENT_BASE_UPDATE, h);

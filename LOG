@@ -148,3 +148,20 @@ file descriptors with the correct clients. We connected multiple clients
 from different machines to make sure that events were being posted
 correctly. Then we started thinking about the game logic and how to use all
 of the stuff we have.
+
+Thurs Feb 22 ?? EST 2013
+Attendees: Ethan DuBois, Eddie Rivas, Niko Konstantakos
+Failed to log -_-;
+
+Fri Feb 22 3:10:23 EST 2013
+Attendees: Ethan DuBois, Eddie Rivas, Niko Konstantakos
+Questions:
+1) How do we use gstate and pstate?
+2) Finally finished. Can we sleep now? T_T
+Decisions:
+1) Decided not to deal with connection so refusal.
+Instead, players beyond 2 will become spectators :D
+Comments/Notes:
+Finally finished and got everything working. That being said, some of our approaches may
+or may not be somewhat unorthodox. Didn't really the states in the header, still managed to
+get the game logic working fine. Can we go sleep now?

@@ -203,16 +203,11 @@ proto_session_body_marshall_int(Proto_Session *s, int v)
 extern int 
 proto_session_body_unmarshall_int(Proto_Session *s, int offset, int *v)
 {
-  //fprintf(stderr, "Got inside body_unmarshall_int\n");
   if (s && ((s->rlen  - (offset + sizeof(int))) >=0 )) {
-    //fprintf(stderr, "Got inside if statement.\n");
     *v = *((int *)(s->rbuf + offset));
-    //fprintf(stderr, "Interpreted integer at (s->rbuf + offset)\n");
     *v = htonl(*v);
-    //fprintf(stderr, "Unmarshalled integer\n");
     return offset + sizeof(int);
   }
-  //fprintf(stderr, "Returned -1 NOOOOOOO\n");
   return -1;
 }
 
@@ -286,37 +281,12 @@ proto_session_body_unmarshall_bytes(Proto_Session *s, int offset, int len,
 extern  int
 proto_session_send_msg(Proto_Session *s, int reset)
 {
-  //NYI();
-  //fprintf(stderr, "Before marshaling, slen = %d\n", s->slen);
   s->shdr.blen = htonl(s->slen);
-  //fprintf(stderr, "After marshaling, slen (or s->shdr.blen) = %d\n", s->shdr.blen);
-
-  // write request
-  // changed
-  // int k;
-  // for (k = 0; k < PROTO_SESSION_BUF_SIZE; k++)
-  // {
-  //   fprintf(stderr,"%c", s->sbuf[k]);
-  // }
-  // fprintf(stderr, "\n");
-  // fprintf(stderr, "Writing bytes to fd %d\n", s->fd);
-  // fprintf(stderr, "Address of shdr = %x\n", &(s->shdr));
-  // fprintf(stderr, "sizeof(Proto_Msg_Hdr) = %d\n", sizeof(Proto_Msg_Hdr));
   if (net_writen(s->fd, &(s->shdr), sizeof(Proto_Msg_Hdr)) == -1)
   {
     return -1;
   }
-  // fprintf(stderr, "Wrote message type: %d", s->shdr.type);
-  // fprintf(stderr, "Wrote version: %d", s->shdr.version);
-  // fprintf(stderr, "Wrote blen: %d", s->shdr.blen);
-
-  //fprintf(stderr, "Before sending, sbuf = ");
   int i;
-  // for (i = 0; i < 9; i++)
-  // {
-  //   fprintf(stderr, "%c ", s->sbuf[i]);
-  // }
-
   if (net_writen(s->fd, &(s->sbuf), s->slen) == -1)
   {
     return -1;
@@ -327,7 +297,6 @@ proto_session_send_msg(Proto_Session *s, int reset)
     proto_session_dump(s);
   }
 
-  // communication was successfull 
   if (reset) proto_session_reset_send(s);
 
   return 1;
@@ -335,35 +304,24 @@ proto_session_send_msg(Proto_Session *s, int reset)
 
 extern int
 proto_session_rcv_msg(Proto_Session *s)
-{
-  //NYI();
-
-  
+{  
   proto_session_reset_receive(s);
 
-  // read reply
-  // changed
-
- 
   int ret = net_readn(s->fd, &(s->rhdr), sizeof(Proto_Msg_Hdr));
   if (ret == -1)
   {
     return -1;
   }
-  else if (ret != 0)
-  {
-    //proto_dump_msghdr(&(s->rhdr));
-    //fprintf(stderr, "Received message type: %d\n", s->rhdr.type);
-    //fprintf(stderr, "Received version: %d\n", s->rhdr.version);
-    //fprintf(stderr, "Received blen: %d\n", s->rhdr.blen);
-  }
 
   int newblen = ntohl(s->rhdr.blen);
 
-  if (net_readn(s->fd, &(s->rbuf), newblen) == -1)
+  if (newblen != 0)
+  {
+    if (net_readn(s->fd, &(s->rbuf), newblen) == -1)
     {
-      return -1;
+        return -1;
     }
+  }
 
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
@@ -376,13 +334,9 @@ extern int
 proto_session_rpc(Proto_Session *s) 
 {
    int rc;
-   // fprintf(stderr, "Before unmarshalling, mt = %d\n", s->shdr.type);
-   // int unmarshalled = ntohl(s->shdr.type);
-   // fprintf(stderr, "After unmarshalling, mt = %d\n", unmarshalled);
 
    if (proto_session_send_msg(s, 1) != -1)
    {
-      //fprintf(stderr, "Sent message correctly in proto_session_rpc.\n");
       rc = proto_session_rcv_msg(s);
    }
    else
@@ -391,6 +345,5 @@ proto_session_rpc(Proto_Session *s)
    }
 
    return rc;
-  //NYI();
 }
 

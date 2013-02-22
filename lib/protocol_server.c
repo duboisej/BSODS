@@ -72,15 +72,12 @@
             extern int
             proto_server_set_req_handler(Proto_Msg_Types mt, Proto_MT_Handler h)
             {
-              //NYI();
               int i;
 
               if (mt>PROTO_MT_REQ_BASE_RESERVED_FIRST &&
                   mt<PROTO_MT_REQ_BASE_RESERVED_LAST) {
-                //i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
                 i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST; // NOTE: Removed -1 from line above to make index of handler correspond to message type.
                 Proto_Server.base_req_handlers[i] = h;
-                //fprintf(stderr, "Set request handler for index %d of request handler array", i);
                 return 1;
               } else {
                 return -1;
@@ -107,7 +104,6 @@
             static int
             proto_server_record_event_subscriber(int fd, int *num)
             {
-              //NYI();
               int rc=-1;
 
               pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
@@ -118,9 +114,7 @@
                 Proto_Server.EventSubscribers[Proto_Server.EventLastSubscriber] = fd; // changed
                 *num = Proto_Server.EventLastSubscriber;// changed
                 Proto_Server.EventLastSubscriber++;// changed
-                //fprintf()
                 Proto_Server.EventNumSubscribers++;// changed
-                fprintf(stderr, "Subscriber number %d with file descriptor %d recorded at index %d\n", Proto_Server.EventNumSubscribers, fd, (Proto_Server.EventLastSubscriber - 1));
                 rc = 1;
               } else {
                 int i;
@@ -133,7 +127,6 @@
                   }
                 }
               }
-              fprintf(stderr, "Number of subscribers: %d\n", Proto_Server.EventNumSubscribers);
               pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
 
               return rc;
@@ -143,7 +136,6 @@
             void *
             proto_server_event_listen(void *arg)
             {
-              //NYI();
               int fd = Proto_Server.EventListenFD;
               int connfd;
 
@@ -153,19 +145,16 @@
 
               for (;;) {
                 connfd = net_accept(fd);
-                //printf("First");
                 if (connfd < 0) {
                   fprintf(stderr, "Error: EventListen accept failed (%d)\n", errno);
                 } else {
                   int i;
-                  //printf("Second");
                   fprintf(stderr, "EventListen: connfd=%d -> ", connfd);
 
                   if (proto_server_record_event_subscriber(connfd, &i) <0) {
             	fprintf(stderr, "oops no space for any more event subscribers\n");
             	close(connfd);
                   } else {
-            	fprintf(stderr, "subscriber num %d\n", i);
                   }
                 } 
               }
@@ -174,7 +163,6 @@
             void
             proto_server_post_event(void) 
             {
-              //NYI();
               int i;
               int num;
 
@@ -184,24 +172,17 @@
               num = Proto_Server.EventNumSubscribers;
               while (num) {
                 Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
-                //fprintf(stderr, "Got fd #%d from index %d\n", Proto_Server.EventSession.fd, i);
                 if (Proto_Server.EventSession.fd != -1) {
                   num--;
-                  //int unmarshalled = ntohl(Proto_Server.EventSession.shdr.type);
-                  //fprintf(stderr, "Server Event Session shdr mt = %d\n", unmarshalled);
-                  //fprintf(stderr, "Server Event Session shdr blen = %d\n", Proto_Server.EventSession.shdr.blen);
                   if (proto_session_send_msg(&Proto_Server.EventSession, 0)<0) {
             	       // must have lost an event connection
             	       close(Proto_Server.EventSession.fd);
             	       Proto_Server.EventSubscribers[i]=-1;
             	       Proto_Server.EventNumSubscribers--;
-                     //fprintf(stderr, "Post event failed.\n");
             	       Proto_Server.session_lost_handler(&Proto_Server.EventSession);
                   } 
-                  // else 
-                  // {
-                  //   fprintf(stderr, "Apparently post_event worked correctly.\n");
-                  // }
+
+                  // Something like this: 
                   // while (/// time less than timeout)
                   // {
                   //     if (proto_session_rcv_msg(&s) <0)
@@ -225,39 +206,25 @@
             static void *
             proto_server_req_dispatcher(void * arg)
             {
-              //printf("Got into method.");
-              //NYI();
               Proto_Session s;
               Proto_Msg_Types mt;
               Proto_MT_Handler hdlr;
               int i;
               unsigned long arg_value = (unsigned long) arg;
-              //fprintf(stderr, "Top of method.");
               pthread_detach(pthread_self());
-
-              //fprintf(stdout, "Detached thread.");
               proto_session_init(&s);
-              //printf("Initialized session.");
               s.fd = (FDType) arg_value;
-              //fprintf(stderr, "got here!!!");
               fprintf(stderr, "proto_rpc_dispatcher: %p: Started: fd=%d\n", 
             	  pthread_self(), s.fd);
 
-              //fprintf(stderr, "got here.");
-
               for (;;) {
-                //fprintf(stderr, "got here");
                 if (proto_session_rcv_msg(&s)==1) {
-                  //fprintf(stderr, "Got inside the if statement.\n");
                   mt = proto_session_hdr_unmarshall_type(&s);
 
                   if (mt > PROTO_MT_REQ_BASE_RESERVED_FIRST && 
                   mt < PROTO_MT_REQ_BASE_RESERVED_LAST)
                   {
-                    //fprintf(stderr, "Received message type %d\n", mt);
-                    //fprintf(stderr, "Good mt = %d", mt);
                     hdlr = Proto_Server.base_req_handlers[mt];
-                    //fprintf(stderr, "Set hdlr to request handler.\n");
             	      if (hdlr(&s)<0) goto leave;
                   }
                 } else {
@@ -274,7 +241,6 @@
             void *
             proto_server_rpc_listen(void *arg)
             {
-              //NYI();
               int fd = Proto_Server.RPCListenFD;
               unsigned long connfd;
               pthread_t tid;
@@ -343,7 +309,6 @@
             extern int
             proto_server_init(void)
             {
-              //NYI();
               int i;
               int rc;
 

@@ -126,10 +126,8 @@
       h.type = PROTO_MT_REP_BASE_HELLO;
       proto_session_hdr_marshall(s, &h);
       proto_session_body_marshall_char(s, 'X'); // send Hello reply indicating that client is player 1
-      //proto_session_dump(s);
-      //fprintf(stderr, "Sending reply back on fd %d", s->fd);
       rc = proto_session_send_msg(s, 1);
-      fprintf(stderr, "Player number 1 connected and said hi from fd %d\n", s->fd);
+      fprintf(stderr, "Player number 1 connected");
       
     }
     else if (player1 != 0 && player2 == 0)
@@ -140,7 +138,7 @@
       proto_session_hdr_marshall(s, &h);
       proto_session_body_marshall_char(s, 'O'); // send Hello reply indicating that client is player 2
       rc = proto_session_send_msg(s, 1);
-      fprintf(stderr, "Player number 2 connected and said hi from fd %d\n", s->fd);
+      fprintf(stderr, "Player number 2 connected");
       updateEvent();
     }
     else // send reply back saying that third (or beyond) client is just a spectator
@@ -150,6 +148,7 @@
       proto_session_body_marshall_char(s, 'S');
       rc = proto_session_send_msg(s, 1);
       fprintf(stderr, "Spectator connected.\n");
+      updateEvent();
     }
 
     return rc;
@@ -185,7 +184,6 @@
 
   int playerMove(Proto_Session *s)
   {
-    //fprintf(stderr, "PlayerMove got called.\n");
     int rc; 
     int fd;
     int player;
@@ -216,7 +214,6 @@
     }
     else 
     {
-      //fprintf(stderr, "It's player %d's turn (correct)\n", player);
       int move = (int) (s->rbuf[0]); // get move from send buffer
       int index = checkValidMove(move);
       if (index == -1)
@@ -237,7 +234,6 @@
           board[index] = 79;
 
         int win = checkwin();
-        //fprintf(stderr, "Win variable = %d\n", win);
         board[9] = win;
         if (turn == 1) turn = 2;
         else turn = 1;
@@ -386,7 +382,6 @@
   int 
   printBoard()
   {
-    //printf("Fuck you, Niko.\n");
     printf("%c|%c|%c\n", board[0], board[1], board[2]);
     printf("-----\n");
     printf("%c|%c|%c\n", board[3], board[4], board[5]); 
@@ -408,8 +403,6 @@
 
     fprintf(stderr, "RPC Port: %d, Event Port: %d\n", proto_server_rpcport(), 
   	  proto_server_eventport());
-
-    //printf("Finished.");
 
     // initialize game board
     int i;

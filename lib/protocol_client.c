@@ -70,8 +70,6 @@ extern int
 proto_client_set_event_handler(Proto_Client_Handle ch, Proto_Msg_Types mt,
 			       Proto_MT_Handler h)
 {
-
-  //NYI();
   int i;
   Proto_Client *c = ch;
 
@@ -79,7 +77,6 @@ proto_client_set_event_handler(Proto_Client_Handle ch, Proto_Msg_Types mt,
       mt<PROTO_MT_EVENT_BASE_RESERVED_LAST) {
     i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST;
     c->base_event_handlers[i] = h;
-    //fprintf(stderr, "Set testEvent() handler at index %d of event handlers.\n", i);
     return 1;
   } else {
     return -1;
@@ -119,8 +116,6 @@ proto_client_event_dispatcher(void * arg)
   c = arg; // changed
   s = &c->event_session;
 
-
-  //NYI();
   for (;;) {
     if (proto_session_rcv_msg(s)==1) {
       mt = proto_session_hdr_unmarshall_type(s);
@@ -130,7 +125,6 @@ proto_client_event_dispatcher(void * arg)
 	       hdlr = c->base_event_handlers[mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST];
 	       if (hdlr(s)<0) 
           {
-            //fprintf(stderr, "Boners.");
             goto leave;
           }
           else
@@ -141,13 +135,11 @@ proto_client_event_dispatcher(void * arg)
     }
     else 
     {
-      //fprintf(stderr, "Proto_session_rcv_msg failed.");
       c->session_lost_handler(s);
       goto leave;
     }
   }
  leave:
-  //fprintf(stderr, "Got inside leave.\n");
   close(s->fd);
   return NULL;
 }
@@ -155,7 +147,6 @@ proto_client_event_dispatcher(void * arg)
 extern int
 proto_client_init(Proto_Client_Handle *ch)
 {
-  //NYI();
   Proto_Msg_Types mt;
   Proto_Client *c;
  
@@ -193,8 +184,6 @@ proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
     return -3;
   }
 
-   //fprintf(stderr, "Client event session fd = %d\n Client rpc session fd = %d\n", c->event_session.fd, c->rpc_session.fd);
-
   return 0;
 }
 
@@ -213,23 +202,14 @@ static int
 do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
 {
 
-  //NYI();
   int rc;
   Proto_Session *s;
   Proto_Client *c = ch;
 
   s = &(c->rpc_session);
 
-  // marshall
-  //fprintf(stderr, "In do_generic_dummy_rpc, mt = %d\n", mt);
   marshall_mtonly(s, mt);
-  //fprintf(stderr, "In do_generic_dummy_rpc, s->mt = %d\n", s->shdr.type);
-  //fprintf(stderr, "In do_generic_dummy_rpc, s->slen = %d\n", s->slen);
   rc = proto_session_rpc(s);
-
-  // if (rc==1) {
-  //   proto_session_body_unmarshall_int(s, 0, &rc);
-  // }
   
   return rc;
 
