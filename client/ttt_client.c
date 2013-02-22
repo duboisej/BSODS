@@ -174,7 +174,14 @@ doConnect(Client *C) {
 		    if (proto_client_hello(C->ph) > 0)
         {
           globals.playersymbol = s->rbuf[0];
-          printf("Connected to %s:%d: You are %c's\n", globals.host, globals.port, globals.playersymbol);
+          if (globals.playersymbol == 'X' || globals.playersymbol == 'O')
+          {
+            printf("Connected to %s:%d: You are %c's\n", globals.host, globals.port, globals.playersymbol);
+          }
+          else if (globals.playersymbol == 'S')
+          {
+            printf("Connected to %d:%d: You are a spectator\n");
+          }
         } 
         else
         {

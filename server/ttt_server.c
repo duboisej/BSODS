@@ -132,7 +132,7 @@
       fprintf(stderr, "Player number 1 connected and said hi from fd %d\n", s->fd);
       
     }
-    else
+    else if (player1 != 0 && player2 == 0)
     {
       player2 = s->fd;
       // send back Hello reply with player number
@@ -142,6 +142,14 @@
       rc = proto_session_send_msg(s, 1);
       fprintf(stderr, "Player number 2 connected and said hi from fd %d\n", s->fd);
       updateEvent();
+    }
+    else // send reply back saying that third (or beyond) client is just a spectator
+    {
+      h.type = PROTO_MT_REP_BASE_HELLO;
+      proto_session_hdr_marshall(s, &h);
+      proto_session_body_marshall_char(s, 'S');
+      rc = proto_session_send_msg(s, 1);
+      fprintf(stderr, "Spectator connected.\n");
     }
 
     return rc;
@@ -188,9 +196,13 @@
     {
       player = 1;
     } 
-    else 
+    else if (s->fd == player2)
     {
       player = 2;
+    }
+    else 
+    {
+      player = 3; // player is spectator
     }
 
     if (player != turn)
