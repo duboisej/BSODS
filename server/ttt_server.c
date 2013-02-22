@@ -185,7 +185,7 @@
 
   int playerMove(Proto_Session *s)
   {
-    fprintf(stderr, "PlayerMove got called.\n");
+    //fprintf(stderr, "PlayerMove got called.\n");
     int rc; 
     int fd;
     int player;
@@ -237,7 +237,7 @@
           board[index] = 79;
 
         int win = checkwin();
-        fprintf(stderr, "Win variable = %d\n", win);
+        //fprintf(stderr, "Win variable = %d\n", win);
         board[9] = win;
         if (turn == 1) turn = 2;
         else turn = 1;

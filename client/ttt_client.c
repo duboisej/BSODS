@@ -288,12 +288,27 @@ docmd(Client *C)
   else if (strncmp(globals.in.data, "where", 
 		   sizeof("where")-1)==0) rc = doWhere();
   else if (strncmp(globals.in.data, "quit", 
-		   sizeof("quit")-1)==0) rc = -1;
+		   sizeof("quit")-1)==0) rc = doQuit();
   else if (strncmp(globals.in.data, "help", 
        sizeof("help")-1)==0) printMenu();
   else  printf("Unknown Command\n");
   
   return rc;
+}
+
+int doQuit(Client *C)
+{
+  if (globals.playersymbol == 'X' || globals.playersymbol == 'O')
+  {
+    proto_client_goodbye(C->ph);
+    printf("Game Over: You Quit\n");
+  }
+  else
+  {
+    printf("Spectating Over: You disconnected.\n");
+  }
+  
+  return -1;
 }
 
 void *

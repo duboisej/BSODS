@@ -33,7 +33,7 @@
             #include "protocol_utils.h"
             #include "protocol_server.h"
 
-            #define PROTO_SERVER_MAX_EVENT_SUBSCRIBERS 2
+            #define PROTO_SERVER_MAX_EVENT_SUBSCRIBERS 1024
             #define NYI() assert(0)
 
             struct {
