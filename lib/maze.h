@@ -1,5 +1,4 @@
-#ifndef __MAZE_H__
-#define __MAZE_H__
+
 
 
 typedef enum  {
@@ -12,10 +11,12 @@ typedef enum  {
   CELL_TYPE_UNBREAKABLE_WALL,
   
   // Jail
-  CELL_TYPE_JAIL,
+  CELL_TYPE_JAIL1,
+  CELL_TYPE_JAIL2,
   
   // Home 
-  CELL_TYPE_HOME
+  CELL_TYPE_HOME1,
+  CELL_TYPE_HOME2
 
 } Cell_Types;
 
@@ -26,19 +27,9 @@ typedef enum  {
 
 } Object_Types;
 
-typedef struct Cell
+typedef struct
 {
 	Cell_Types type;
 	Object_Types contains;
-};
+} Cell; 
 
-typedef struct Maze
-{
-	Cell maze[200][200];
-	
-};
-
-typedef struct Player
-{
-
-};
