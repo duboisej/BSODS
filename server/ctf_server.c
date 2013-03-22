@@ -25,7 +25,7 @@
       {
           printf("Ya done goofed!!\n");
       }
-      //dump();
+      dump();
   }
 
   int
@@ -37,7 +37,7 @@
    printf("Got past variables.\n");
    int c;
 
-   map = fopen ("../server/dagame.map", "r");  /* open the file for reading */
+   map = fopen ("../server/daGame.map", "r");  /* open the file for reading */
    /* elapsed.dta is the name of the file */
    /* "rt" means open the file for reading text */
 
@@ -49,12 +49,11 @@
    {
       for (j = 0; j <= 200; j++)
       {
-        printf("Got into inner for loop.\n");
 
 
             c = fgetc(map);
 
-            printf("Read character %c at %d, %d\n", c, i, j);
+            //printf("Read character %c at %d, %d\n", c, i, j);
             if (i == 0 || j == 0 || i == 199 || j == 199)
             {
                 
@@ -67,12 +66,13 @@
             {
                 maze[i][j].type = CELL_TYPE_FLOOR;
                 numfloor++;
-                printf("Found a floor cell!! omglol!!\n");
+                //printf("Found a floor cell!! omglol!!\n");
             }
             else if (c == 'J')
             {
                 maze[i][j].type = CELL_TYPE_JAIL1;
                 numjail1++;
+                printf("jail\n");
             }
             else if (c == 'j')
             {
@@ -101,7 +101,6 @@
         // }
       } 
     }
-    printf("Found %d unbreakable wall cells.\n", numunbreakablewalls);
     //  free(curr);
 }
 
