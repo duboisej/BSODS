@@ -205,7 +205,7 @@ proto_session_body_unmarshall_int(Proto_Session *s, int offset, int *v)
 {
   if (s && ((s->rlen  - (offset + sizeof(int))) >=0 )) {
     *v = *((int *)(s->rbuf + offset));
-    *v = htonl(*v);
+    *v = ntohl(*v);
     return offset + sizeof(int);
   }
   return -1;

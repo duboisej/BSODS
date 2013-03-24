@@ -1,4 +1,5 @@
-
+// maze.h
+// enums and typedefs for the maze
 
 
 typedef enum  {

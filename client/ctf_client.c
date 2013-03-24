@@ -4,6 +4,7 @@
 #include "../lib/types.h"
 #include "../lib/protocol_client.h"
 #include "../lib/protocol_utils.h"
+#include "../lib/maze.h"
 
 #define STRLEN 81
 #define BUFLEN 16384
@@ -30,7 +31,12 @@ typedef struct ClientState  {
   Proto_Client_Handle ph;
 } Client;
 
-char board[10];
+//char board[10];
+
+// represent game board..?
+char map[201][201];
+int xDimension = 200;
+int yDimension = 200;
 
 int 
 getInput()
@@ -187,31 +193,45 @@ doWhere(void) {
 }
 
 int
-doMark(Client* C, char cell)
+doFetchInfo(Client* C, char cell)
 {
+  
   int rc;
+  int *replycode;
   rc = proto_client_move(C->ph, cell);
   // Handle replies
   Proto_Session *s = proto_client_rpc_session(C->ph);
-  proto_session_hdr_unmarshall(s, &(s->rhdr));
-  char replycode = s->rbuf[0];
-
-  if (replycode == 'N') // Not your turn yet
-  {
-    if (globals.playersymbol == 'X' || globals.playersymbol == 'O') // Actual player
-    {
-      printf("Not your turn yet!");
-    }
-    else 
-    {
-      printf("You're a spectator. You can't move.\n"); // Spectator
-    }
-  }
-  else if (replycode == 'I') // Invalid move reply
-  {
-    printf("Not a valid move!");
-  }
+  proto_session_body_unmarshall_int(s, 0, replycode);
   
+  if (cell == 'f') {
+  	printf("There are %d floor cells.\n", *replycode);
+    rc = 1;
+  }
+  else if (cell == 'H')
+  {
+    printf("There are %d home cells for team 1.\n", *replycode);
+    rc = 1;
+  }
+  else if (cell == 'h')
+  {
+    printf("There are %d home cells for team 2.\n", *replycode);
+    rc = 1;
+  }
+  else if (cell == 'J')
+  {
+    printf("There are %d jail cells for team 1.\n", *replycode);
+    rc = 1;
+  }
+  else if (cell == 'j')
+  {
+    printf("There are %d jail cells for team 2.\n", *replycode);
+    rc = 1;
+  }
+  else if (cell == 'w')
+  {
+    printf("There are %d wall cells.\n", *replycode);
+    rc = 1;
+  }
   return rc;
 
 }
@@ -243,40 +263,32 @@ doDisconnect(Client* C)
 	return 1;
 }
 
+int
+doGetDimension (Client *C)
+{
+  printf("The dimensions of the board are %d x %d.\n", xDimension, yDimension);
+  return 1;
+}
+
 int 
 docmd(Client *C)
 {
+  int i = 0;
   int rc = 1;
-  
+  printf("You entered: %s\n", globals.in.data);
   if (strlen(globals.in.data)==0) return rc; //rc = doReprint();
-  else if (strncmp(globals.in.data, "connect", 
-		   sizeof("connect")-1)==0) rc = doConnect(C);
-  else if (strncmp(globals.in.data, "disconnect",
-   		   sizeof("disconnect")-1)==0) rc = doDisconnect(C);
-  else if (strncmp(globals.in.data, "1", 
-		   sizeof("1")-1)==0) rc = doMark(C, '1');
-  else if (strncmp(globals.in.data, "2", 
-		   sizeof("2")-1)==0) rc = doMark(C, '2');
-  else if (strncmp(globals.in.data, "3", 
-		   sizeof("3")-1)==0) rc = doMark(C, '3');
-  else if (strncmp(globals.in.data, "4", 
-		   sizeof("4")-1)==0) rc = doMark(C, '4');
-  else if (strncmp(globals.in.data, "5", 
-		   sizeof("5")-1)==0) rc = doMark(C, '5');
-  else if (strncmp(globals.in.data, "6", 
-		   sizeof("6")-1)==0) rc = doMark(C, '6');
-  else if (strncmp(globals.in.data, "7", 
-		   sizeof("7")-1)==0) rc = doMark(C, '7');
-  else if (strncmp(globals.in.data, "8", 
-		   sizeof("8")-1)==0) rc = doMark(C, '8');
-  else if (strncmp(globals.in.data, "9", 
-		   sizeof("9")-1)==0) rc = doMark(C, '9');
-  else if (strncmp(globals.in.data, "where", 
-		   sizeof("where")-1)==0) rc = doWhere();
+  else if (strncmp(globals.in.data, "connect", sizeof("connect")-1)==0) rc = doConnect(C);
+  else if (strncmp(globals.in.data, "disconnect", sizeof("disconnect")-1)==0) rc = doDisconnect(C);
+  else if (strncmp(globals.in.data, "numhome 1", sizeof("numhome 1")-1)==0) rc = doFetchInfo(C, 'H');
+  else if (strncmp(globals.in.data, "numhome 2", sizeof("numhome 2")-1)==0) rc = doFetchInfo(C, 'h');
+  else if (strncmp(globals.in.data, "numjail 1", sizeof("numjail 1")-1)==0) rc = doFetchInfo(C, 'J');
+  else if (strncmp(globals.in.data, "numjail 2", sizeof("numjail 2")-1)==0) rc = doFetchInfo(C, 'j');
+  else if (strncmp(globals.in.data, "dim", sizeof("dim")-1)==0) rc = doGetDimension(C);
+  else if (strncmp(globals.in.data, "numwall", sizeof("numwall")-1)==0) rc = doFetchInfo(C, 'w');
+  else if (strncmp(globals.in.data, "numfloor", sizeof("numfloor")-1)==0) rc = doFetchInfo(C, 'f');
+  else if (strncmp(globals.in.data, "dump", sizeof("dump")-1)==0) rc = doDump(C);
   else if (strncmp(globals.in.data, "quit", 
 		   sizeof("quit")-1)==0) rc = doQuit();
-  else if (strncmp(globals.in.data, "help", 
-       sizeof("help")-1)==0) printMenu();
   else  printf("Unknown Command\n");
   
   return rc;
@@ -337,124 +349,197 @@ initGlobals(void)
   globals.connected=0;
 }
 
-static int 
-printBoard()
-{
-  printf("%c|%c|%c\n", board[0], board[1], board[2]);
-  printf("-----\n");
-  printf("%c|%c|%c\n", board[3], board[4], board[5]); 
-  printf("-----\n");
-  printf("%c|%c|%c\n", board[6], board[7], board[8]);
-
-
-}
-
 static int
-updateBoard(Proto_Session *s)
+updateMap(Proto_Session *s)
 {
-  int rc = 1;
-  int i;
-  int same = 1;
-
-  // check if board needs to be updated
-  for (i = 0; i < 9; i++)
+  printf("Got into updateMap.\n");
+  proto_session_dump(s);
+  int i = 0;
+  int j = 0;
+  int k;
+  for (k = 0; k < s->rhdr.blen; k++)
   {
-    char old = board[i];
-    char new = s->rbuf[i];
-    if (old != new)
+    char c = s->rbuf[k];
+    if (c == 'z')
     {
-      board[i] = new;
-      same = 0;
+      break;
     }
-  }
-  // grab the last cell 
-  board[9] = s->rbuf[9];
-
-  if (same == 0)
-  {
-    fprintf(stderr, "\n");
-    printBoard();
-  }
-
-  // Game win logic
-  if (board[9] == 1) // X's Won
-  {
-    if (globals.playersymbol == 'X')
+    map[i][j] = c;
+    printf("%c", c);
+    if (j++ == 200)
     {
-      printf("Game Over: You win!! :D\n");
-    } 
-    else if (globals.playersymbol == 'O')
-    {
-      printf("Game Over: You lose :'(\n");
-    } 
-    else
-    {
-      printf("Game Over: X's Won.\n");
+      j = 0;
+      i++;
     }
-    exit(0);
+    
   }
-  else if (board[9] == 0) // O's Won
-  {
-    if (globals.playersymbol == 'O')
-    {
-      printf("Game Over: You win!! :D\n");
-    }
-    else if (globals.playersymbol == 'X')
-    {
-      printf("Game Over: You lose :'(\n");
-    }
-    else
-    {
-      printf("Game Over: O's Won.\n");
-    }
-    exit(0);
-  }
-  else if (board[9] == 2)
-  {
-    printf("Game Over: Draw. :/\n");
-    exit(0);
-  }
-  else if (board[9] == 3) // One player quit
-  {
-    if (globals.playersymbol == 'X' || globals.playersymbol == 'O')
-    {
-      printf("Game Over: Other Side Quit\n");
-
-    }
-    else
-    {
-      printf("A player quit the game.\n");
-    }
-    exit(0);
-  }
-  else
-  {
-    return 1;
-  }
-  
+  return 1;
 }
+
+int
+doDump(Client *C)
+{
+  int i;
+  int j;
+  for (i = 0; i < 201; i++)
+  {
+    for (j = 0; j < 201; j++)
+    {
+      printf("%c", map[i][j]);
+    }
+  }
+
+  printf("Cell at 100, 2:");
+  doCInfo(C, 100, 2);
+
+  return 1;
+}
+
+int
+doCInfo(Client *C, int x, int y)
+{
+  char c = map[x][y];
+  int team;
+
+  if (y <= 100) team = 1; 
+  else team = 2;
+
+  if (c == ' ')
+  {
+
+    printf("Cell at (%d, %d) is an unoccupied floor cell on team %d\n", x, y, team);
+  }
+  else if (c == 'J' || c == 'j')
+  {
+      printf("Cell at (%d, %d) is an unoccupied jail cell on team %d\n", x, y, team);
+  }
+  else if (c == 'H' || c == 'h') 
+  {
+      printf("Cell at (%d, %d) is an unoccupied home cell on team %d\n", x, y, team);
+  }
+  else if (c == '#')
+  {
+      printf("Cell at (%d, %d) is a wall cell on team %d\n", x, y, team);
+  }
+}
+// static int 
+// printBoard()
+// {
+//   printf("%c|%c|%c\n", board[0], board[1], board[2]);
+//   printf("-----\n");
+//   printf("%c|%c|%c\n", board[3], board[4], board[5]); 
+//   printf("-----\n");
+//   printf("%c|%c|%c\n", board[6], board[7], board[8]);
+
+
+// }
+
+// static int
+// updateBoard(Proto_Session *s)
+// {
+//   int rc = 1;
+//   int i;
+//   int same = 1;
+
+//   // check if board needs to be updated
+//   for (i = 0; i < 9; i++)
+//   {
+//     char old = board[i];
+//     char new = s->rbuf[i];
+//     if (old != new)
+//     {
+//       board[i] = new;
+//       same = 0;
+//     }
+//   }
+//   // grab the last cell 
+//   board[9] = s->rbuf[9];
+
+//   if (same == 0)
+//   {
+//     fprintf(stderr, "\n");
+//     printBoard();
+//   }
+
+//   // Game win logic
+//   if (board[9] == 1) // X's Won
+//   {
+//     if (globals.playersymbol == 'X')
+//     {
+//       printf("Game Over: You win!! :D\n");
+//     } 
+//     else if (globals.playersymbol == 'O')
+//     {
+//       printf("Game Over: You lose :'(\n");
+//     } 
+//     else
+//     {
+//       printf("Game Over: X's Won.\n");
+//     }
+//     exit(0);
+//   }
+//   else if (board[9] == 0) // O's Won
+//   {
+//     if (globals.playersymbol == 'O')
+//     {
+//       printf("Game Over: You win!! :D\n");
+//     }
+//     else if (globals.playersymbol == 'X')
+//     {
+//       printf("Game Over: You lose :'(\n");
+//     }
+//     else
+//     {
+//       printf("Game Over: O's Won.\n");
+//     }
+//     exit(0);
+//   }
+//   else if (board[9] == 2)
+//   {
+//     printf("Game Over: Draw. :/\n");
+//     exit(0);
+//   }
+//   else if (board[9] == 3) // One player quit
+//   {
+//     if (globals.playersymbol == 'X' || globals.playersymbol == 'O')
+//     {
+//       printf("Game Over: Other Side Quit\n");
+
+//     }
+//     else
+//     {
+//       printf("A player quit the game.\n");
+//     }
+//     exit(0);
+//   }
+//   else
+//   {
+//     return 1;
+//   }
+  
+// }
 
 int 
 main(int argc, char **argv)
 {
-  /*Client c;
+  Client c;
 
   initGlobals();
 
   if (clientInit(&c) < 0) {
     fprintf(stderr, "ERROR: clientInit failed\n");
     return -1;
-  }*/
+  }
   
   printf("\nWelcome to Capture The Flag Beta!\n");
   printMenu();
 
   // Add the update event handler
-  /*Proto_MT_Handler h;
-  h = &updateBoard;
+  Proto_MT_Handler h;
+  h = &updateMap;
   proto_client_set_event_handler(c.ph, PROTO_MT_EVENT_BASE_UPDATE, h);
 
-  shell(&c);*/
+  shell(&c);
 
   return 0;
 }

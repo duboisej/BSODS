@@ -165,3 +165,41 @@ Comments/Notes:
 Finally finished and got everything working. That being said, some of our approaches may
 or may not be somewhat unorthodox. Didn't really the states in the header, still managed to
 get the game logic working fine. Can we go sleep now?
+
+Wednesday March 20 1:00 PM
+Attendees: Ethan DuBois, Eddie Rivas, Niko Konstantakos
+Questions:
+1) (All questions and answers described in documentation)
+Decisions:
+1) (Also described in documentation)
+Comments/Notes:
+This meeting was just to decide on design and architecture
+so everything we discussed on this day is reflected in the documentation.
+
+Thurs March 21 12:00 PM
+Attendees: Ethan DuBois, Eddie Rivas, Niko Konstantakos
+Questions:
+1) How do we get the menu working correctly?
+2) Why won't the server load in the map correctly?
+Decisions:
+1) Make a 2d array of "Cell" objects to store map state
+Comments/Notes:
+Server is mostly finished, but we're having an issue with the 
+loading of the game map.
+
+Thurs March 21 11:00 PM
+Attendees: Niko Konstantakos
+Comments/Notes:
+Fixed the issue where the server wasn't loading the map correctly.
+Mistakenly typed dagame.map instead of daGame.map -_-
+
+Friday March 21 12:00 PM
+Attendees: Ethan DuBois, Eddie Rivas, Niko Konstantakos
+Questions:
+1) How do we get the menu to accept input for cinfo function?
+2) Why in the world did a printf statement fix one of our menu issues!?
+Decisions: 
+1) Server will update each client with only updates to the game board, not the whole map.
+Comments/Notes:
+Everything is working well, except unable to get user input for cinfo although
+the function for cinfo is working.
