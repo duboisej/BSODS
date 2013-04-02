@@ -3,12 +3,14 @@
   #include <sys/types.h>
   #include <poll.h>
   #include "../lib/types.h"
+  #include "../lib/maze.h"
   #include "../lib/protocol_server.h"
   #include "../lib/protocol_utils.h"
-  #include "../lib/maze.h"
+
 
 
   Cell maze[201][201];
+  int playerLocations[2][300];
   int numfloor;
   int numhome1;
   int numhome2;
@@ -190,6 +192,76 @@ dump()
     proto_server_post_event();  
   }
 
+  int 
+  moveEvent(int x, int y, int playernum)
+  {
+    printf("moveEvent called.\n");
+    Proto_Session *s;
+    Proto_Msg_Hdr hdr;
+
+    s = proto_server_event_session();
+    hdr.type = PROTO_MT_EVENT_BASE_MOVE;
+    proto_session_hdr_marshall(s, &hdr);
+    proto_session_body_marshall_int(s, x);
+    proto_session_body_marshall_int(s, y);
+    proto_session_body_marshall_int(s, playernum);
+    proto_session_dump(s);
+    proto_server_post_event();  
+  }
+
+  int 
+  breakWallEvent(int x, int y)
+  {
+    printf("breakWallEvent called.\n");
+    Proto_Session *s;
+    Proto_Msg_Hdr hdr;
+
+    s = proto_server_event_session();
+    hdr.type = PROTO_MT_EVENT_BASE_MOVE;
+    proto_session_hdr_marshall(s, &hdr);
+    proto_session_body_marshall_int(s, x);
+    proto_session_body_marshall_int(s, y);
+    proto_session_dump(s);
+    proto_server_post_event();  
+  }
+
+  int 
+  objectEvent(int playernum, Object_Types object, char action)
+  {
+    printf("objectEvent called\n");
+    Proto_Session *s;
+    Proto_Msg_Hdr hdr;
+
+    s = proto_server_event_session();
+    if (object == OBJECT_TYPE_HAMMER)
+    {
+      if (action == 'p')
+      {
+        hdr.type = PROTO_MT_EVENT_BASE_PICKUPHAMMER;
+      }
+      else 
+      {
+        hdr.type = PROTO_MT_EVENT_BASE_DROPHAMMER;
+      }
+    }
+    else
+    {
+      if(action == 'p')
+      {
+        hdr.type = PROTO_MT_EVENT_BASE_PICKUPFLAG;
+      }
+      else
+      {
+        hdr.type = PROTO_MT_EVENT_BASE_DROPFLAG;
+      }
+    }
+    hdr.type = PROTO_MT_EVENT_BASE_PICKUPFLAG;
+    proto_session_hdr_marshall(s, &hdr);
+    proto_session_body_marshall_int(s, playernum);
+    proto_session_dump(s);
+    proto_server_post_event();  
+  }
+
   char MenuString[] =
     "d/D-debug on/off u-update clients q-quit";
 
@@ -275,52 +347,41 @@ dump()
     return rc;
   }
 
-  int playerQuery(Proto_Session *s)
+  int playerMove(Proto_Session *s)
   {
-    printf("Got into playerQuery, motherfucker.\n");
     int rc; 
     int fd;
     int player;
     Proto_Msg_Hdr h;
-    bzero(&h, sizeof(s));
 
-    char choice = s->rbuf[0]; // get choice from send buffer
+    int x;
+    int y;
+    int offset = sizeof(Proto_Msg_Hdr);
+    proto_session_body_unmarshall_int(s, offset, &x);
+    proto_session_body_unmarshall_int(s, offset, &y);
+    
+    // Game logic - check for valid move and if valid, update map
 
-        // send good (empty) reply
-    bzero(&h, sizeof(s));
-    h.type = PROTO_MT_REP_BASE_MOVE;
-    proto_session_hdr_marshall(s, &h);
+    int valid = 0; 
 
-     // logic for which number to send back
-    int reply = -1; 
-    if (choice == 'f')
+    if (valid)
     {
-      reply = numfloor;
+      // send good (empty) reply
+      bzero(&h, sizeof(s));
+      h.type = PROTO_MT_REP_BASE_MOVE;
+      proto_session_hdr_marshall(s, &h);
+      rc=proto_session_send_msg(s, 1);
     }
-    else if (choice == 'H')
+    else
     {
-       reply = numhome1;
-    }
-    else if (choice == 'h')
-    {
-      reply = numhome2;
-    }
-    else if (choice == 'w')
-    {
-      //printf("There are %d wall cells according to the server.\n", numwall);
-      reply = numwall;
-    }
-    else if (choice == 'J')
-    {
-      reply = numjail1;
-    }
-    else if (choice == 'j')
-    {
-      reply = numjail2;
-    }
+      // send reply with invalid
+      h.type = PROTO_MT_REP_BASE_MOVE;
+      proto_session_hdr_marshall(s, &h);
+      proto_session_body_marshall_char(s, 'I'); // 'I' in body indicates invalid move
+      rc=proto_session_send_msg(s,1);
 
-    proto_session_body_marshall_int(s, reply); // 0 in body indicates good move.
-    rc=proto_session_send_msg(s,1);
+    }
+    // more logic here?
 
     //updateEvent();
     

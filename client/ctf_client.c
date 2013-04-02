@@ -2,9 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../lib/types.h"
+#include "../lib/maze.h"
 #include "../lib/protocol_client.h"
 #include "../lib/protocol_utils.h"
-#include "../lib/maze.h"
+
 
 #define STRLEN 81
 #define BUFLEN 16384
@@ -31,12 +32,41 @@ typedef struct ClientState  {
   Proto_Client_Handle ph;
 } Client;
 
+struct Flag {
+  int x;
+  int y;
+  int flag_team;
+  int player;
+};
+
+struct Hammer {
+  int x;
+  int y;
+  int hammernum;
+  int player;
+};
+
+
 //char board[10];
 
 // represent game board..?
+
 char map[201][201];
 int xDimension = 200;
 int yDimension = 200;
+int playerRPCs[300];
+int nextRPC = 0;
+
+struct Hammer h1;
+struct Hammer h2;
+struct Hammer h3;
+struct Hammer h4;
+
+struct Flag f1;
+struct Flag f2;
+
+Cell board[201][201];
+int playerLocations[2][300];
 
 int 
 getInput()
@@ -237,6 +267,36 @@ doFetchInfo(Client* C, char cell)
 }
 
 int
+doMove(Client* C, int x, int y)
+{
+  int rc;
+  rc = proto_client_move(C->ph, x, y);
+  // Handle replies
+  Proto_Session *s = proto_client_rpc_session(C->ph);
+  proto_session_hdr_unmarshall(s, &(s->rhdr));
+  char replycode = s->rbuf[0];
+
+  if (replycode == 'N') // Not your turn yet
+  {
+    if (globals.playersymbol == 'X' || globals.playersymbol == 'O') // Actual player
+    {
+      printf("Not your turn yet!");
+    }
+    else 
+    {
+      printf("You're a spectator. You can't move.\n"); // Spectator
+    }
+  }
+  else if (replycode == 'I') // Invalid move reply
+  {
+    printf("Not a valid move!");
+  }
+  
+  return rc;
+
+}
+
+int
 doDisconnect(Client* C)
 {
   if (globals.connected == 0)
@@ -273,6 +333,8 @@ doGetDimension (Client *C)
 int 
 docmd(Client *C)
 {
+
+  // Use kbhit to track incoming keystrokes
   int i = 0;
   int rc = 1;
   printf("You entered: %s\n", globals.in.data);
@@ -543,3 +605,4 @@ main(int argc, char **argv)
 
   return 0;
 }
+

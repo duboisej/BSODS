@@ -158,7 +158,7 @@
                   }
                 } 
               }
-            } 
+            }
 
             void
             proto_server_post_event(void) 

@@ -230,6 +230,21 @@ do_generic_rpc_char(Proto_Client_Handle ch, Proto_Msg_Types mt, char data)
   return rc;
 }
 
+do_generic_rpc_location(Proto_Client_Handle ch, Proto_Msg_Types mt, int x, int y)
+{
+  int rc;
+  Proto_Session *s;
+  Proto_Client *c = ch;
+  s = &(c->rpc_session);
+
+  s->shdr.type = mt;
+  proto_session_hdr_marshall(s, &(s->shdr));
+  proto_session_body_marshall_int(s, x);
+  proto_session_body_marshall_int(s, y);
+  rc = proto_session_rpc(s);
+  return rc;
+}
+
 extern int 
 proto_client_hello(Proto_Client_Handle ch)
 {
