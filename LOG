@@ -203,3 +203,14 @@ Decisions:
 Comments/Notes:
 Everything is working well, except unable to get user input for cinfo although
 the function for cinfo is working.
+
+Tuesday April 2 11:32 AM
+Attendees: Ethan DuBois, Eddie Rivas, Niko Konstantakos
+Questions:
+1) How do we handle player keydown events?
+2) Should our definitions be in our Maze header?
+3) Is it worth to do checks in the client side considering that we may have an outdated game state?
+Decisions:
+1) When we reach the point for keydown events, use the **kbhit** C file.
+2) Attempting to validate every move from the server's perspective rather than have client checks.
+3) 4 hammers in the map.
