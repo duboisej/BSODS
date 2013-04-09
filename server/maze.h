@@ -26,10 +26,34 @@ typedef enum  {
 
 } Object_Types;
 
-
+typedef struct 
+{
+  int playernum;
+  int x;
+  int y;
+  char direction;
+  int team;
+  int fd;
+} Player;
 
 typedef struct
 {
 	Cell_Types type;
 	Object_Types contains;
+  Player player;
 } Cell;
+
+typedef struct {
+  int x;
+  int y;
+  int flag_team;
+  int player;
+} Flag;
+
+typedef struct {
+  int x;
+  int y;
+  int hammernum;
+  int player;
+} Hammer;
+

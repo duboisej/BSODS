@@ -216,7 +216,7 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
 }
 
 static int
-do_generic_rpc_char(Proto_Client_Handle ch, Proto_Msg_Types mt, char data)
+do_generic_rpc_char_int(Proto_Client_Handle ch, Proto_Msg_Types mt, char data, int num)
 {
   int rc;
   Proto_Session *s;
@@ -226,6 +226,7 @@ do_generic_rpc_char(Proto_Client_Handle ch, Proto_Msg_Types mt, char data)
   s->shdr.type = PROTO_MT_REQ_BASE_MOVE;
   proto_session_hdr_marshall(s, &(s->shdr));
   proto_session_body_marshall_char(s, data);
+  proto_session_body_marshall_int(s, num);
   rc = proto_session_rpc(s);
   return rc;
 }
@@ -252,9 +253,9 @@ proto_client_hello(Proto_Client_Handle ch)
 }
 
 extern int 
-proto_client_move(Proto_Client_Handle ch, char data)
+proto_client_move(Proto_Client_Handle ch, char move, int playernum)
 {
-  return do_generic_rpc_char(ch,PROTO_MT_REQ_BASE_MOVE, data);  
+  return do_generic_rpc_char_int(ch,PROTO_MT_REQ_BASE_MOVE, move, playernum);  
 }
 
 extern int 

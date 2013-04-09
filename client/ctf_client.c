@@ -12,6 +12,8 @@
 #define XSTR(s) STR(s)
 #define STR(s) #s
 
+int playernum;
+
 struct LineBuffer {
   char data[BUFLEN];
   int  len;
@@ -32,20 +34,6 @@ typedef struct ClientState  {
   Proto_Client_Handle ph;
 } Client;
 
-struct Flag {
-  int x;
-  int y;
-  int flag_team;
-  int player;
-};
-
-struct Hammer {
-  int x;
-  int y;
-  int hammernum;
-  int player;
-};
-
 
 //char board[10];
 
@@ -57,16 +45,16 @@ int yDimension = 200;
 int playerRPCs[300];
 int nextRPC = 0;
 
-struct Hammer h1;
-struct Hammer h2;
-struct Hammer h3;
-struct Hammer h4;
+// struct Hammer h1;
+// struct Hammer h2;
+// struct Hammer h3;
+// struct Hammer h4;
 
-struct Flag f1;
-struct Flag f2;
+// struct Flag f1;
+// struct Flag f2;
 
 Cell board[201][201];
-int playerLocations[2][300];
+//Player players[300];
 
 int 
 getInput()
@@ -228,7 +216,7 @@ doFetchInfo(Client* C, char cell)
   
   int rc;
   int *replycode;
-  rc = proto_client_move(C->ph, cell);
+  rc = proto_client_move(C->ph, cell, playernum);
   // Handle replies
   Proto_Session *s = proto_client_rpc_session(C->ph);
   proto_session_body_unmarshall_int(s, 0, replycode);
@@ -267,10 +255,10 @@ doFetchInfo(Client* C, char cell)
 }
 
 int
-doMove(Client* C, int x, int y)
+doMove(Client* C, char move)
 {
   int rc;
-  rc = proto_client_move(C->ph, x, y);
+  rc = proto_client_move(C->ph, move, playernum);
   // Handle replies
   Proto_Session *s = proto_client_rpc_session(C->ph);
   proto_session_hdr_unmarshall(s, &(s->rhdr));

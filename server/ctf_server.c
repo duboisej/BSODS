@@ -10,13 +10,23 @@
 
 
   Cell maze[201][201];
-  int playerLocations[2][300];
+
+  //Player players[300];
+
   int numfloor;
   int numhome1;
   int numhome2;
   int numwall;
   int numjail1;
   int numjail2;
+
+  //struct Hammer h1;
+  //struct Hammer h2;
+  //struct Hammer h3;
+  //struct Hammer h4;
+
+  //struct Flag f1;
+  //struct Flag f2;
 
   FILE *map;
 
@@ -347,22 +357,44 @@ dump()
     return rc;
   }
 
+  // int 
+  // checkMove(char move, int playernum)
+  // {
+  //   Player p = player[playernum];
+  //   Player o = map[playery][playerx]->player;
+
+  //   if(o->team != 0)
+  //   {
+  //     movingPlayerTeam = p->team;;
+  //     otherPlayerTeam = o->team;
+
+  //     if (movingPlayerTeam != otherPlayerTeam)
+  //     {
+  //       // Tag player
+
+  //     }
+  //   }
+
+  // }
+
   int playerMove(Proto_Session *s)
   {
     int rc; 
     int fd;
     int player;
     Proto_Msg_Hdr h;
-
-    int x;
-    int y;
-    int offset = sizeof(Proto_Msg_Hdr);
-    proto_session_body_unmarshall_int(s, offset, &x);
-    proto_session_body_unmarshall_int(s, offset, &y);
-    
+    char move = s->rbuf[0];
+    int playernum;
+    proto_session_body_unmarshall_int(s, sizeof(Proto_Msg_Hdr) + 1, &playernum);
     // Game logic - check for valid move and if valid, update map
 
     int valid = 0; 
+
+    if(move = 'w')
+    {
+      //valid = checkMove(move, playernum);
+
+    }
 
     if (valid)
     {
@@ -382,8 +414,6 @@ dump()
 
     }
     // more logic here?
-
-    //updateEvent();
     
     return rc;
   }
@@ -546,7 +576,7 @@ dump()
 
     Proto_MT_Handler h = &playerHello;
     proto_server_set_req_handler(PROTO_MT_REQ_BASE_HELLO, h);
-    Proto_MT_Handler q = &playerQuery;
+    Proto_MT_Handler q = &playerMove;
     proto_server_set_req_handler(PROTO_MT_REQ_BASE_MOVE, q);
     Proto_MT_Handler g = &playerGoodbye;
     proto_server_set_req_handler(PROTO_MT_REQ_BASE_GOODBYE, g);
