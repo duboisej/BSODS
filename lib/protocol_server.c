@@ -172,7 +172,7 @@
               num = Proto_Server.EventNumSubscribers;
               while (num) {
                 Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
-                printf("FD of first subscriber is %d\n", Proto_Server.EventSession.fd);
+                //printf("FD of first subscriber is %d\n", Proto_Server.EventSession.fd);
                 if (Proto_Server.EventSession.fd != -1) {
                   num--;
                   if (proto_session_send_msg(&Proto_Server.EventSession, 0)<0) {

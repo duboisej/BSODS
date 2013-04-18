@@ -2,6 +2,7 @@
 // enums and typedefs for the maze
 
 
+
 typedef enum  {
 
   // Floor
@@ -21,16 +22,32 @@ typedef enum  {
 
 } Cell_Types;
 
-typedef enum  {
-
-  OBJECT_TYPE_FLAG,
-  OBJECT_TYPE_HAMMER
-
-} Object_Types;
+typedef struct {
+  int hammerID;
+  int uses;
+} Hammer;
 
 typedef struct
 {
-	Cell_Types type;
-	Object_Types contains;
+  Hammer mjolnir; 
+	Cell_Types type; 
+  int flag; 
+  int playernum; 
 } Cell; 
+
+typedef struct 
+{
+  int x;
+  int y;
+} Point;
+
+typedef struct {
+  Point location;
+  Hammer mjolnir;
+  int playernum;
+  int team;
+  int flag;
+} Player;
+
+
 

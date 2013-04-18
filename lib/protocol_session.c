@@ -32,6 +32,7 @@
 #include "protocol.h"
 #include "protocol_utils.h"
 #include "protocol_session.h"
+#include "maze.h"
 
 #define NYI() assert(0)
 
@@ -211,6 +212,106 @@ proto_session_body_unmarshall_int(Proto_Session *s, int offset, int *v)
   return -1;
 }
 
+extern int
+proto_session_body_marshall_cell(Proto_Session *s, Cell *c)
+{
+  printf("Got into marshall_cell\n");
+  int rc;
+  rc = proto_session_body_marshall_hammer(s, &(c->mjolnir));
+  if (rc != -1) rc = proto_session_body_marshall_int(s, c->type);
+  if (rc != -1) rc = proto_session_body_marshall_int(s, c->flag);
+  if (rc != -1) rc = proto_session_body_marshall_int(s, c->playernum);
+  return rc;
+}
+
+extern int
+proto_session_body_unmarshall_cell(Proto_Session *s, int offset, Cell *c)
+{
+  printf("Got into unmarshall_cell\n");
+  offset = proto_session_body_unmarshall_hammer(s, offset, &(c->mjolnir));
+  if (offset != -1) proto_session_body_unmarshall_int(s, offset, &(c->type));
+  if (offset != -1) proto_session_body_unmarshall_int(s, offset, &(c->flag));
+  if (offset != -1) proto_session_body_unmarshall_int(s, offset, &(c->playernum));
+  return offset;
+
+}
+
+extern int
+proto_session_body_marshall_hammer(Proto_Session *s, Hammer *h)
+{
+  printf("Got into marshall_hammer\n");
+  int rc = -1;
+  printf("Received hammerID = %d\n", h->hammerID);
+  if (proto_session_body_marshall_int(s, h->hammerID) != -1)
+  {
+    printf("Marshalled hammerID\n");
+    rc = proto_session_body_marshall_int(s, h->uses);
+    if (rc != -1)
+    {
+      printf("Marshalled uses\n");
+    }
+  }
+  return rc;
+
+}
+
+extern int
+proto_session_body_unmarshall_hammer(Proto_Session *s, int offset, Hammer *h)
+{
+  printf("Got into unmarshall_hammer\n");
+  int hammerID;
+  int uses;
+  offset = proto_session_body_unmarshall_int(s, offset, &hammerID);
+  if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &uses);
+  return offset;
+}
+
+extern int
+proto_session_body_marshall_player(Proto_Session *s, Player *p)
+{
+  printf("Got into marshall_player\n");
+  int rc;
+  rc = proto_session_body_marshall_point(s, &(p->location));
+  if (rc != -1) rc = proto_session_body_marshall_hammer(s, &(p->mjolnir));
+  if (rc != -1) rc = proto_session_body_marshall_int(s, p->playernum);
+  if (rc != -1) rc = proto_session_body_marshall_int(s, p->team);
+  if (rc != -1) rc = proto_session_body_marshall_int(s, p->flag);
+  return rc;
+}
+
+extern int
+proto_session_body_unmarshall_player(Proto_Session *s, int offset, Player *p)
+{
+  printf("Got into unmarshall_player\n");
+  offset = proto_session_body_unmarshall_point(s, offset, &(p->location));
+  if (offset != -1) proto_session_body_unmarshall_hammer(s, offset, &(p->mjolnir));
+  if (offset != -1) proto_session_body_unmarshall_int(s, offset, &(p->playernum));
+  if (offset != -1) proto_session_body_unmarshall_int(s, offset, &(p->team));
+  if (offset != -1) proto_session_body_unmarshall_int(s, offset, &(p->flag));
+  return offset;
+}
+
+extern int
+proto_session_body_marshall_point(Proto_Session *s, Point *p)
+{
+  printf("Got into marshall_point\n");
+  int rc = -1;
+  if (proto_session_body_marshall_int(s, p->x) != -1)
+  {
+    rc = proto_session_body_marshall_int(s, p->y);
+  }
+  return rc;
+}
+
+extern int
+proto_session_body_unmarshall_point(Proto_Session *s, int offset, Point *p)
+{
+  printf("Got into unmarshall_point\n");
+  offset = proto_session_body_unmarshall_int(s, offset, &(p->x));
+  if (offset != -1) proto_session_body_unmarshall_int(s, offset, &(p->y));
+  return offset;
+}
+
 extern int 
 proto_session_body_marshall_char(Proto_Session *s, char v)
 {
@@ -282,6 +383,7 @@ extern  int
 proto_session_send_msg(Proto_Session *s, int reset)
 {
   s->shdr.blen = htonl(s->slen);
+  //proto_session_dump(s);
   if (net_writen(s->fd, &(s->shdr), sizeof(Proto_Msg_Hdr)) == -1)
   {
     return -1;
@@ -314,14 +416,18 @@ proto_session_rcv_msg(Proto_Session *s)
   }
 
   int newblen = ntohl(s->rhdr.blen);
+  printf("newblen = %d\n", newblen);
 
   if (newblen != 0)
   {
     if (net_readn(s->fd, &(s->rbuf), newblen) == -1)
     {
+        printf("Failed to read from buffer.\n");
         return -1;
     }
+    s->rlen = newblen;
   }
+  proto_session_dump(s);
 
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());

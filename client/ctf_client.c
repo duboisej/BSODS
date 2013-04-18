@@ -25,7 +25,7 @@ struct Globals {
   char host[STRLEN];
   PortType port;
   int connected;
-  char playersymbol;
+  int playernum;
 } globals;
 
 
@@ -39,10 +39,11 @@ typedef struct ClientState  {
 
 // represent game board..?
 
-char map[201][201];
+char maze[201][201];
 int xDimension = 200;
 int yDimension = 200;
-int playerRPCs[300];
+Player players[300];
+int hammers[2][2];
 int nextRPC = 0;
 
 // struct Hammer h1;
@@ -174,18 +175,15 @@ doConnect(Client *C) {
           return -1;
       } else {
 		    globals.connected=1;
-        s = proto_client_rpc_session(C->ph);
 		    if (proto_client_hello(C->ph) > 0)
         {
-          globals.playersymbol = s->rbuf[0];
-          if (globals.playersymbol == 'X' || globals.playersymbol == 'O')
-          {
-            printf("Connected to %s:%d: You are %c's\n", globals.host, globals.port, globals.playersymbol);
-          }
-          else if (globals.playersymbol == 'S')
-          {
-            printf("Connected to %d:%d: You are a spectator\n");
-          }
+            s = proto_client_rpc_session(C->ph);
+            proto_session_dump(s);
+            int temp;
+            proto_session_body_unmarshall_int(s, 0, &temp);
+            printf("Temp = %d\n", temp);
+            globals.playernum = temp;
+            printf("Connected to %s:%d: You are player number %d", globals.host, globals.port, globals.playernum);
         } 
         else
         {
@@ -258,27 +256,13 @@ int
 doMove(Client* C, char move)
 {
   int rc;
-  rc = proto_client_move(C->ph, move, playernum);
+  rc = proto_client_move(C->ph, move, globals.playernum);
   // Handle replies
   Proto_Session *s = proto_client_rpc_session(C->ph);
   proto_session_hdr_unmarshall(s, &(s->rhdr));
   char replycode = s->rbuf[0];
 
-  if (replycode == 'N') // Not your turn yet
-  {
-    if (globals.playersymbol == 'X' || globals.playersymbol == 'O') // Actual player
-    {
-      printf("Not your turn yet!");
-    }
-    else 
-    {
-      printf("You're a spectator. You can't move.\n"); // Spectator
-    }
-  }
-  else if (replycode == 'I') // Invalid move reply
-  {
-    printf("Not a valid move!");
-  }
+  
   
   return rc;
 
@@ -292,11 +276,7 @@ doDisconnect(Client* C)
     printf("You are not connected to a server.\n");
     return 1;
   }
-  if (globals.playersymbol != 'S')
-  {
-	//Send a goodbye message to server. Don't wait for a reply.
-	   proto_client_goodbye(C->ph);
-  }
+
 	//Close both sockets (fd's)
   printf("Game Over: You Quit\n");
 	Proto_Session* srpc = proto_client_rpc_session(C->ph);
@@ -346,10 +326,7 @@ docmd(Client *C)
 
 int doQuit(Client *C)
 {
-  if (globals.playersymbol == 'X' || globals.playersymbol == 'O')
-  {
-    proto_client_goodbye(C->ph);
-  }
+  
   printf("You Quit.\n");
   
   
@@ -399,6 +376,57 @@ initGlobals(void)
   globals.connected=0;
 }
 
+// static int
+// updateMap(Proto_Session *s)
+// {
+//   printf("Got into updateMap.\n");
+//   proto_session_dump(s);
+
+//   // Load hammer locations from session
+
+//   int i;
+//   int j;
+//   int offset = 0;
+//   for (i = 0; i < 2; i++)
+//   {
+//     for (j = 0; j < 2; j++)
+//     {
+//       if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &(hammers[i][j]));
+//     }
+//   }
+
+//   if (offset == -1)
+//   {
+//     return -1;
+//   }
+
+//   // Load maze from session
+
+//   int k;
+//   int l;
+//   for (k = 0; k < 201; k++)
+//   {
+//     for (l = 0; l < 201; l++)
+//     {
+//       if (offset != -1) offset = proto_session_body_unmarshall_cell(s, offset, &(maze[i][j]));
+//     }
+//   }
+
+//   // Get number of players (to read in players)
+
+//   int numplayers;
+//   if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &numplayers);
+
+//   // Load players
+
+//   int m;
+//   for (m = 0; m < numplayers; m++)
+//   {
+//     if (offset != -1) offset = proto_session_body_unmarshall_player(s, offset, &(players[m+1]));
+//   }
+//   return 1;
+// }
+
 static int
 updateMap(Proto_Session *s)
 {
@@ -414,8 +442,50 @@ updateMap(Proto_Session *s)
     {
       break;
     }
-    map[i][j] = c;
-    printf("%c", c);
+    
+    // Load appropriate Cell
+    Cell *cell = &(maze[i][j]);
+    if (c == 'H')
+    {
+      cell->type = CELL_TYPE_HOME1;
+    }
+    else if (c == 'h')
+    {
+      cell->type = CELL_TYPE_HOME2;
+    }
+    else if (c == 'J')
+    {
+      cell->type = CELL_TYPE_JAIL1;
+    }
+    else if (c == 'j')
+    {
+      cell->type = CELL_TYPE_JAIL2;
+    }
+    else if (c == '$')
+    {
+      cell->type = CELL_TYPE_UNBREAKABLE_WALL;
+    }
+    else if (c == '#')
+    {
+      cell->type = CELL_TYPE_WALL;
+    }
+    else if (c == 'M')
+    {
+      cell->mjolnir.hammerID = 1;
+    }
+    else if (c == 'm')
+    {
+      cell->mjolnir.hammerID = 2;
+    }
+    else if (c == 'F')
+    {
+      cell->flag = 1;
+    }
+    else if (c == 'f')
+    {
+      cell->flag = 2;
+    }
+
     if (j++ == 200)
     {
       j = 0;
@@ -435,7 +505,7 @@ doDump(Client *C)
   {
     for (j = 0; j < 201; j++)
     {
-      printf("%c", map[i][j]);
+      printf("%c", maze[i][j]);
     }
   }
 
@@ -448,7 +518,7 @@ doDump(Client *C)
 int
 doCInfo(Client *C, int x, int y)
 {
-  char c = map[x][y];
+  char c = maze[x][y];
   int team;
 
   if (y <= 100) team = 1; 
@@ -566,7 +636,6 @@ doCInfo(Client *C, int x, int y)
 //   {
 //     return 1;
 //   }
-  
 // }
 
 int 
