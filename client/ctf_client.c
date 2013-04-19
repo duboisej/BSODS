@@ -34,28 +34,17 @@ typedef struct ClientState  {
   Proto_Client_Handle ph;
 } Client;
 
-
-//char board[10];
-
 // represent game board..?
-
-char maze[201][201];
+Cell maze[201][201];
+char board[201][201];
 int xDimension = 200;
 int yDimension = 200;
 Player players[300];
+int numPlayers;
 int hammers[2][2];
+int flags[2][2];
 int nextRPC = 0;
 
-// struct Hammer h1;
-// struct Hammer h2;
-// struct Hammer h3;
-// struct Hammer h4;
-
-// struct Flag f1;
-// struct Flag f2;
-
-Cell board[201][201];
-//Player players[300];
 
 int 
 getInput()
@@ -414,13 +403,13 @@ initGlobals(void)
 
 //   // Get number of players (to read in players)
 
-//   int numplayers;
-//   if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &numplayers);
+//   int numPlayers;
+//   if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &numPlayers);
 
 //   // Load players
 
 //   int m;
-//   for (m = 0; m < numplayers; m++)
+//   for (m = 0; m < numPlayers; m++)
 //   {
 //     if (offset != -1) offset = proto_session_body_unmarshall_player(s, offset, &(players[m+1]));
 //   }
@@ -432,10 +421,124 @@ updateMap(Proto_Session *s)
 {
   printf("Got into updateMap.\n");
   proto_session_dump(s);
+  int offset = 0;
+
+  // Get number of players (to read in players)
+
+  if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &numPlayers);
+
+  printf("There are %d players, read from buffer\n", numPlayers);
+  // Load players
+
+  int m;
+  for (m = 1; m < numPlayers+1; m++)
+  {
+    if (offset != -1)
+    {
+      offset = proto_session_body_unmarshall_player(s, offset, &(players[m]));
+    }
+    else
+    {
+      return -1;
+    }
+  }
+
+  // Load flag locations
+  if (offset != -1)
+  {
+    offset = proto_session_body_unmarshall_int(s, offset, &(flags[0][0]));
+  }
+  else
+  {
+    return -1;
+  }
+
+  if (offset != -1)
+  {
+    offset = proto_session_body_unmarshall_int(s, offset, &(flags[0][1]));
+  }
+  else
+  {
+    return -1;
+  }
+
+  if (offset != -1)
+  {
+    offset = proto_session_body_unmarshall_int(s, offset, &(flags[1][0]));
+  }
+  else
+  {
+    return -1;
+  }
+
+  if (offset != -1)
+  {
+    offset = proto_session_body_unmarshall_int(s, offset, &(flags[1][1]));
+  }
+  else
+  {
+    return -1;
+  }
+
+  // Load hammer locations
+   if (offset != -1)
+  {
+    offset = proto_session_body_unmarshall_int(s, offset, &(hammers[0][0]));
+  }
+  else
+  {
+    return -1;
+  }
+
+  if (offset != -1)
+  {
+    offset = proto_session_body_unmarshall_int(s, offset, &(hammers[0][1]));
+  }
+  else
+  {
+    return -1;
+  }
+
+  if (offset != -1)
+  {
+    offset = proto_session_body_unmarshall_int(s, offset, &(hammers[1][0]));
+  }
+  else
+  {
+    return -1;
+  }
+
+  if (offset != -1)
+  {
+    offset = proto_session_body_unmarshall_int(s, offset, &(hammers[1][1]));
+  }
+  else
+  {
+    return -1;
+  }
+
+  // Update map representation from player info
+  int a;
+  for (a = 1; a < numPlayers+1; a++)
+  {
+    Player *p = &(players[a]);
+    Point *point = &(p->location);
+    int x = point->x;
+    int y = point->y;
+    Cell *c = &(maze[x][y]);
+    c->mjolnir.hammerID = p->mjolnir.hammerID;
+    c->mjolnir.uses = p->mjolnir.uses;
+    c->flag = p->flag;
+    c->playernum = a;
+  }
+  //dumpPlayers();
+
+  // Load map
+
   int i = 0;
   int j = 0;
   int k;
-  for (k = 0; k < s->rhdr.blen; k++)
+  for (k = offset; k < s->rhdr.blen; k++)
   {
     char c = s->rbuf[k];
     if (c == 'z')
@@ -463,6 +566,7 @@ updateMap(Proto_Session *s)
     }
     else if (c == '$')
     {
+      //if (i == 0) printf("found an unbreakable left wall\n");
       cell->type = CELL_TYPE_UNBREAKABLE_WALL;
     }
     else if (c == '#')
@@ -479,10 +583,12 @@ updateMap(Proto_Session *s)
     }
     else if (c == 'F')
     {
+      printf("found flag 1 location on client\n");
       cell->flag = 1;
     }
     else if (c == 'f')
     {
+      printf("found flag 2 location on client\n");
       cell->flag = 2;
     }
 
@@ -493,6 +599,11 @@ updateMap(Proto_Session *s)
     }
     
   }
+  
+  dumpPlayers();
+  dumpFlagLocations();
+  dumpHammerLocations();
+  dumpMap();
   return 1;
 }
 
@@ -518,7 +629,7 @@ doDump(Client *C)
 int
 doCInfo(Client *C, int x, int y)
 {
-  char c = maze[x][y];
+  char c = board[x][y];
   int team;
 
   if (y <= 100) team = 1; 
@@ -526,14 +637,13 @@ doCInfo(Client *C, int x, int y)
 
   if (c == ' ')
   {
-
     printf("Cell at (%d, %d) is an unoccupied floor cell on team %d\n", x, y, team);
   }
   else if (c == 'J' || c == 'j')
   {
       printf("Cell at (%d, %d) is an unoccupied jail cell on team %d\n", x, y, team);
   }
-  else if (c == 'H' || c == 'h') 
+  else if (c == 'H' || c == 'h')
   {
       printf("Cell at (%d, %d) is an unoccupied home cell on team %d\n", x, y, team);
   }
@@ -542,101 +652,174 @@ doCInfo(Client *C, int x, int y)
       printf("Cell at (%d, %d) is a wall cell on team %d\n", x, y, team);
   }
 }
-// static int 
-// printBoard()
-// {
-//   printf("%c|%c|%c\n", board[0], board[1], board[2]);
-//   printf("-----\n");
-//   printf("%c|%c|%c\n", board[3], board[4], board[5]); 
-//   printf("-----\n");
-//   printf("%c|%c|%c\n", board[6], board[7], board[8]);
 
+int
+dumpMap()
+{
 
-// }
+    // Dump map 
+    printf("Printing Game Map:\n");
+    int i;
+    int j;
+    int celltype;
 
-// static int
-// updateBoard(Proto_Session *s)
-// {
-//   int rc = 1;
-//   int i;
-//   int same = 1;
+    for (i = 0; i < 201; i++)
+    {
+        for (j = 0; j < 201; j++)
+        {
+            Cell c = maze[i][j];
+            Cell_Types celltype = c.type;
 
-//   // check if board needs to be updated
-//   for (i = 0; i < 9; i++)
-//   {
-//     char old = board[i];
-//     char new = s->rbuf[i];
-//     if (old != new)
-//     {
-//       board[i] = new;
-//       same = 0;
-//     }
-//   }
-//   // grab the last cell 
-//   board[9] = s->rbuf[9];
+            if (celltype == CELL_TYPE_HOME1 || celltype == CELL_TYPE_HOME2 
+              || celltype == CELL_TYPE_JAIL1 || celltype == CELL_TYPE_JAIL2 
+              || celltype == CELL_TYPE_FLOOR)
+            {
+              if (c.mjolnir.hammerID == 1)
+              {
+                printf("M");
+              }
+              else if (c.mjolnir.hammerID == 2)
+              {
+                printf("m");
+              }
+              else if (c.flag == 1)
+              {
+                printf("F");
+              }
+              else if (c.flag == 2)
+              {
+                printf("f");
+              }
+              else if (celltype == CELL_TYPE_HOME1)
+              {
+                  if (c.playernum != 0)
+                  {
+                    printf("%d", c.playernum);
+                  }
+                  else
+                  {
+                    printf("H");
+                  }
+              }
+              else if (celltype == CELL_TYPE_HOME2)
+              {
+                  if (c.playernum != 0)
+                  {
+                    printf("%d", c.playernum);
+                  }
+                  else
+                  {
+                    printf("h");
+                  }
+              }
+              else if (celltype == CELL_TYPE_JAIL1)
+              {
+                  if (c.playernum != 0)
+                  {
+                    printf("%d", c.playernum);
+                  }
+                  else
+                  {
+                    printf("J");
+                  }
+              }
+              else if (celltype == CELL_TYPE_JAIL2)
+              {
+                  if (c.playernum != 0)
+                  {
+                    printf("%d", c.playernum);
+                  }
+                  else
+                  {
+                    printf("j");
+                  }
+              } 
+              else if (celltype == CELL_TYPE_FLOOR)
+              {
+                  if (c.playernum != 0)
+                  {
+                    printf("%d", c.playernum);
+                  }
+                  else
+                  {
+                    printf(" ");
+                  }
+              }
+            }
+            else if (celltype == CELL_TYPE_WALL)
+            {
+                  if (c.playernum != 0)
+                  {
+                    printf("%d", c.playernum);
+                  }
+                  else
+                  {
+                    printf("#");
+                  }
+            }
+            else if (celltype == CELL_TYPE_UNBREAKABLE_WALL)
+            {
+                  if (c.playernum != 0)
+                  {
+                    printf("%d", c.playernum);
+                  }
+                  else
+                  {
+                    printf("$");
+                  }
+            }
+            
 
-//   if (same == 0)
-//   {
-//     fprintf(stderr, "\n");
-//     printBoard();
-//   }
+        }
+        printf("\n");
+    }
+}
 
-//   // Game win logic
-//   if (board[9] == 1) // X's Won
-//   {
-//     if (globals.playersymbol == 'X')
-//     {
-//       printf("Game Over: You win!! :D\n");
-//     } 
-//     else if (globals.playersymbol == 'O')
-//     {
-//       printf("Game Over: You lose :'(\n");
-//     } 
-//     else
-//     {
-//       printf("Game Over: X's Won.\n");
-//     }
-//     exit(0);
-//   }
-//   else if (board[9] == 0) // O's Won
-//   {
-//     if (globals.playersymbol == 'O')
-//     {
-//       printf("Game Over: You win!! :D\n");
-//     }
-//     else if (globals.playersymbol == 'X')
-//     {
-//       printf("Game Over: You lose :'(\n");
-//     }
-//     else
-//     {
-//       printf("Game Over: O's Won.\n");
-//     }
-//     exit(0);
-//   }
-//   else if (board[9] == 2)
-//   {
-//     printf("Game Over: Draw. :/\n");
-//     exit(0);
-//   }
-//   else if (board[9] == 3) // One player quit
-//   {
-//     if (globals.playersymbol == 'X' || globals.playersymbol == 'O')
-//     {
-//       printf("Game Over: Other Side Quit\n");
+int 
+dumpFlagLocations()
+{
+  printf("Printing Flag Locations:\n");
+  printf("Flag 1 is at location (%d,%d)\n", flags[0][0], flags[0][1]);
+  printf("Flag 2 is at location (%d,%d)\n", flags[1][0], flags[1][1]);
+}
 
-//     }
-//     else
-//     {
-//       printf("A player quit the game.\n");
-//     }
-//     exit(0);
-//   }
-//   else
-//   {
-//     return 1;
-//   }
-// }
+int
+dumpHammerLocations()
+{
+  printf("Printing Hammer Locations:\n");
+  printf("Hammer 1 is at location (%d,%d)\n", hammers[0][0], hammers[0][1]);
+  printf("Hammer 2 is at location (%d,%d)\n", hammers[1][0], hammers[1][1]);
+}
+
+int
+dumpPlayers()
+
+{
+    // Dump Player information
+    printf("Printing Player information:\n");
+    printf("There are %d current players.\n", numPlayers);
+    int a;
+    for (a = 1; a < numPlayers+1; a++)
+    {
+      printf("Player %d:\n", a);
+      Player *p = &(players[a]);
+      printf("\tPlayer number is %d\n", p->playernum);
+      printf("\tPlayer is on team number %d\n", p->team);
+      printf("\tLocation: %d,%d\n", p->location.x, p->location.y);
+      Hammer *h = &(p->mjolnir);
+      if (h->hammerID != 0)
+      {
+        printf("\tCarrying Hammer %d with %d uses left.\n", h->hammerID, h->uses);
+      }
+      if (p->flag != 0)
+      {
+        printf("\tCarrying Flag %d\n", p->flag);
+      }
+      printf("\n");
+      
+    }
+}
+
 
 int 
 main(int argc, char **argv)

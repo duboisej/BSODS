@@ -8,10 +8,10 @@
   #include "../lib/protocol_utils.h"
 
   // Players can't spawn on either of the hammer's home locations.
-  #define HAMMER1X 10
-  #define HAMMER1Y 95
-  #define HAMMER2X 190
-  #define HAMMER2Y 95
+  #define HAMMER1X 95
+  #define HAMMER1Y 10
+  #define HAMMER2X 95
+  #define HAMMER2Y 190
 
   Cell maze[201][201];
 
@@ -20,7 +20,8 @@
   int hammers[2][2];
   int flags[2][2];
 
-  int nextPlayerIndex = 1;
+  int nextPlayerIndex = 0;
+  int numPlayers;
   int nextTeam = 1;
 
   int numfloor;
@@ -94,104 +95,141 @@
 }
 
 int
-dump()
+dumpPlayers()
+
 {
+    // Dump Player information
+    printf("Printing Player information:\n");
+    printf("There are %d current players.\n"), numPlayers;
+    int a;
+    for (a = 1; a < numPlayers+1; a++)
+    {
+      printf("Player %d:\n", a);
+      Player *p = &(players[a]);
+      printf("\tPlayer number is %d\n", p->playernum);
+      printf("\tPlayer is on team number %d\n", p->team);
+      printf("\tLocation: %d,%d\n", p->location.x, p->location.y);
+      Hammer *h = &(p->mjolnir);
+      if (h->hammerID != 0)
+      {
+        printf("\tCarrying Hammer %d with %d uses left.\n", h->hammerID, h->uses);
+      }
+      if (p->flag != 0)
+      {
+        printf("\tCarrying Flag %d\n", p->flag);
+      }
+      printf("\n");
+      
+    }
+}
+
+int
+dumpMap()
+{
+
+    // Dump map 
+    printf("Printing Game Map:\n");
     int i;
     int j;
     int celltype;
 
-    for (i = 0; i < 200; i++)
+    for (i = 0; i < 201; i++)
     {
-        for (j = 0; j < 200; j++)
+        for (j = 0; j < 201; j++)
         {
-            celltype = maze[i][j].type;
+            Cell c = maze[i][j];
+            Cell_Types celltype = c.type;
 
-            if (celltype == CELL_TYPE_HOME1)
+            if (celltype == CELL_TYPE_HOME1 || celltype == CELL_TYPE_HOME2 
+              || celltype == CELL_TYPE_JAIL1 || celltype == CELL_TYPE_JAIL2 
+              || celltype == CELL_TYPE_FLOOR)
             {
-                printf("H");
+              if (c.mjolnir.hammerID == 1)
+              {
+                printf("M");
+              }
+              else if (c.mjolnir.hammerID == 2)
+              {
+                printf("m");
+              }
+              else if (c.flag == 1)
+              {
+                printf("F");
+              }
+              else if (c.flag == 2)
+              {
+                printf("f");
+              }
+              else if (celltype == CELL_TYPE_HOME1)
+              {
+                  if (c.playernum != 0)
+                  {
+                    printf("%d", c.playernum);
+                  }
+                  else
+                  {
+                    printf("H");
+                  }
+              }
+              else if (celltype == CELL_TYPE_HOME2)
+              {
+                  if (c.playernum != 0)
+                  {
+                    printf("%d", c.playernum);
+                  }
+                  else
+                  {
+                    printf("h");
+                  }
+              }
+              else if (celltype == CELL_TYPE_JAIL1)
+              {
+                  if (c.playernum != 0)
+                  {
+                    printf("%d", c.playernum);
+                  }
+                  else
+                  {
+                    printf("J");
+                  }
+              }
+              else if (celltype == CELL_TYPE_JAIL2)
+              {
+                  if (c.playernum != 0)
+                  {
+                    printf("%d", c.playernum);
+                  }
+                  else
+                  {
+                    printf("j");
+                  }
+              } 
+              else if (celltype == CELL_TYPE_FLOOR)
+              {
+                  if (c.playernum != 0)
+                  {
+                    printf("%d", c.playernum);
+                  }
+                  else
+                  {
+                    printf(" ");
+                  }
+              }
             }
-            else if (celltype == CELL_TYPE_HOME2)
-            {
-                printf("h");
-            }
-            else if (celltype == CELL_TYPE_JAIL1)
-            {
-                printf("J");
-            }
-            else if (celltype == CELL_TYPE_JAIL2)
-            {
-                printf("j");
-            }
-            else if (celltype == CELL_TYPE_WALL || celltype == CELL_TYPE_UNBREAKABLE_WALL)
+            else if (celltype == CELL_TYPE_WALL)
             {
                 printf("#");
             }
-            else if (celltype == CELL_TYPE_FLOOR)
+            else if (celltype == CELL_TYPE_UNBREAKABLE_WALL)
             {
-                printf(" ");
+                printf("$");
             }
+            
 
         }
         printf("\n");
     }
 }
-
-// int 
-//   updateEvent(void)
-//   {
-//     printf("updateEvent called.\n");
-//     Proto_Session *s;
-//     Proto_Msg_Hdr hdr;
-
-//     s = proto_server_event_session();
-//     hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
-//     proto_session_hdr_marshall(s, &hdr);
-
-//     printf("Marshalling hammer locations\n");
-//     // Marshall hammer locations
-//     int l;
-//     int m;
-//     int offset = 0;
-//     // for (l = 0; l < 2; l++)
-//     // {
-//     //   for (m = 0; m < 2; m++)
-//     //   {
-//     //     proto_session_body_marshall_int(s, hammers[l][m]);
-//     //   }
-//     // }
-
-//     printf("Marshalling game map\n");
-//     // Marshall game map
-//     int i;
-//     int j;
-//     for (i = 0; i < 201; i++)
-//     {
-//       for (j = 0; j < 201; j++)
-//       {
-//         printf("marshalling cell (%d,%d)\n", i, j);
-//         Cell *c = &(maze[i][j]);
-//         proto_session_body_marshall_cell(s, c);
-//       }
-//     }
-
-//     // printf("Marshalling number of players\n");
-//     // // Send over number of players
-
-//     // proto_session_body_marshall_int(s, nextPlayerIndex);
-
-//     // printf("Marshalling players\n");
-//     // // Marshall Player info
-//     // int k;
-//     // for (k = 1; k < nextPlayerIndex; k++)
-//     // {
-//     //   Player *p = &(players[k]);
-//     //   proto_session_body_marshall_player(s, p);
-//     // }
-
-//     proto_session_dump(s);
-//     proto_server_post_event();
-
-//   }
 
   int 
   updateEvent(void)
@@ -204,6 +242,39 @@ dump()
     hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
     proto_session_hdr_marshall(s, &hdr);
 
+    // Marshall player information
+
+    printf("Marshalling number of players\n");
+    printf("Number of players is currently %d\n", numPlayers);
+    // Send over number of players
+
+    proto_session_body_marshall_int(s, numPlayers);
+
+    printf("Marshalling players\n");
+    // Marshall Player info
+    int k;
+    for (k = 1; k < numPlayers+1; k++)
+    {
+      Player *p = &(players[k]);
+      proto_session_body_marshall_player(s, p);
+    }
+
+    // Marshall Flag info
+    printf("Marshalling flag locations\n");
+    proto_session_body_marshall_int(s, flags[0][0]);
+    proto_session_body_marshall_int(s, flags[0][1]);
+    proto_session_body_marshall_int(s, flags[1][0]);
+    proto_session_body_marshall_int(s, flags[1][1]);
+
+    // Marshall Hammers
+    printf("Marshalling hammer locations\n");
+    proto_session_body_marshall_int(s, hammers[0][0]);
+    proto_session_body_marshall_int(s, hammers[0][1]);
+    proto_session_body_marshall_int(s, hammers[1][0]);
+    proto_session_body_marshall_int(s, hammers[1][1]);
+
+    // Marshall maze (ASCII)
+
     int i;
     int j;
     int celltype;
@@ -215,36 +286,7 @@ dump()
             Cell c = maze[i][j];
             Cell_Types celltype = c.type;
 
-            if (celltype == CELL_TYPE_HOME1)
-            {
-                proto_session_body_marshall_char(s, 'H');
-                //printf("H");
-            }
-            else if (celltype == CELL_TYPE_HOME2)
-            {
-                proto_session_body_marshall_char(s, 'h');
-                //printf("h");
-            }
-            else if (celltype == CELL_TYPE_JAIL1)
-            {
-                proto_session_body_marshall_char(s, 'J');
-                //printf("J");
-            }
-            else if (celltype == CELL_TYPE_JAIL2)
-            {
-                proto_session_body_marshall_char(s, 'j');
-                //printf("j");
-            }
-            else if (celltype == CELL_TYPE_WALL)
-            {
-                proto_session_body_marshall_char(s, '#');
-                //printf("#");
-            }
-            else if (celltype == CELL_TYPE_UNBREAKABLE_WALL)
-            {
-                proto_session_body_marshall_char(s, '$');
-            }
-            else if (celltype == CELL_TYPE_FLOOR)
+            if (celltype == CELL_TYPE_HOME1 || celltype == CELL_TYPE_HOME2 || celltype == CELL_TYPE_JAIL1 || celltype == CELL_TYPE_JAIL2 || celltype == CELL_TYPE_FLOOR)
             {
               if (c.mjolnir.hammerID == 1)
               {
@@ -256,23 +298,57 @@ dump()
               }
               else if (c.flag == 1)
               {
+                printf("found flag 1 in updateEvent\n");
                 proto_session_body_marshall_char(s, 'F');
               }
               else if (c.flag == 2)
               {
+                printf("found flag 2 in updateEvent\n");
                 proto_session_body_marshall_char(s, 'f');
               }
-              else
+              else if (celltype == CELL_TYPE_HOME1)
               {
-                proto_session_body_marshall_char(s, ' ');
-                //printf(" ");
+                  proto_session_body_marshall_char(s, 'H');
+                  //printf("H");
+              }
+              else if (celltype == CELL_TYPE_HOME2)
+              {
+                  proto_session_body_marshall_char(s, 'h');
+                  //printf("h");
+              }
+              else if (celltype == CELL_TYPE_JAIL1)
+              {
+                  proto_session_body_marshall_char(s, 'J');
+                  //printf("J");
+              }
+              else if (celltype == CELL_TYPE_JAIL2)
+              {
+                  proto_session_body_marshall_char(s, 'j');
+                  //printf("j");
+              } 
+              else if (celltype == CELL_TYPE_FLOOR)
+              {
+                  proto_session_body_marshall_char(s, ' ');
               }
             }
+            else if (celltype == CELL_TYPE_WALL)
+            {
+                proto_session_body_marshall_char(s, '#');
+                //printf("#");
+            }
+            else if (celltype == CELL_TYPE_UNBREAKABLE_WALL)
+            {
+              //if (i == 0) printf("Got left side unbreakable wall\n");
+                //printf("marshalled unbreakable cell\n");
+                proto_session_body_marshall_char(s, '$');
+            }
+            
 
         }
         proto_session_body_marshall_char(s, '\n');
     }
-    proto_session_body_marshall_char(s, 'z');
+    proto_session_body_marshall_char(s, 'z'); // marks end of maze
+
     proto_session_dump(s);
     proto_server_post_event();  
   }
@@ -309,43 +385,6 @@ dump()
     proto_session_dump(s);
     proto_server_post_event();  
   }
-
-  // int 
-  // objectEvent(int playernum, Object_Types object, char action)
-  // {
-  //   printf("objectEvent called\n");
-  //   Proto_Session *s;
-  //   Proto_Msg_Hdr hdr;
-
-  //   s = proto_server_event_session();
-  //   if (object == OBJECT_TYPE_HAMMER)
-  //   {
-  //     if (action == 'p')
-  //     {
-  //       hdr.type = PROTO_MT_EVENT_BASE_PICKUPHAMMER;
-  //     }
-  //     else 
-  //     {
-  //       hdr.type = PROTO_MT_EVENT_BASE_DROPHAMMER;
-  //     }
-  //   }
-  //   else
-  //   {
-  //     if(action == 'p')
-  //     {
-  //       hdr.type = PROTO_MT_EVENT_BASE_PICKUPFLAG;
-  //     }
-  //     else
-  //     {
-  //       hdr.type = PROTO_MT_EVENT_BASE_DROPFLAG;
-  //     }
-  //   }
-  //   hdr.type = PROTO_MT_EVENT_BASE_PICKUPFLAG;
-  //   proto_session_hdr_marshall(s, &hdr);
-  //   proto_session_body_marshall_int(s, playernum);
-  //   proto_session_dump(s);
-  //   proto_server_post_event();  
-  // }
 
   char MenuString[] =
     "d/D-debug on/off u-update clients q-quit";
@@ -418,26 +457,6 @@ dump()
     return rc;
   }
 
-  // int 
-  // checkMove(char move, int playernum)
-  // {
-  //   Player p = player[playernum];
-  //   Player o = map[playery][playerx]->player;
-
-  //   if(o->team != 0)
-  //   {
-  //     movingPlayerTeam = p->team;;
-  //     otherPlayerTeam = o->team;
-
-  //     if (movingPlayerTeam != otherPlayerTeam)
-  //     {
-  //       // Tag player
-
-  //     }
-  //   }
-
-  // }
-
   int playerMove(Proto_Session *s)
   {
     int rc; 
@@ -494,7 +513,7 @@ dump()
     Cell *c;
     do
     {
-      c = &(maze[y][x]);
+      c = &(maze[x][y]);
       if (team == 1)
       {
         x = getLocationInRange(2, 11);
@@ -508,9 +527,10 @@ dump()
     }
     while(c->playernum != 0 && y != 95 && x != 190 && x != 10);
 
+    // Note that x and y are flipped since the maze indexing accesses row first and then column
     Point p;
-    p.x = x;
-    p.y = y;
+    p.x = y;
+    p.y = x;
     return p;
   }
 
@@ -540,31 +560,41 @@ dump()
       x = getLocationInRange(xmin, xmax);
       y = getLocationInRange(ymin, ymax);
     } 
-    while (maze[y][x].type != CELL_TYPE_WALL && maze[y][x].type != CELL_TYPE_JAIL2 
-      && maze[y][x].type != CELL_TYPE_JAIL1 && maze[y][x].type != CELL_TYPE_UNBREAKABLE_WALL 
-      && maze[y][x].type != CELL_TYPE_HOME2 && maze[y][x].type != CELL_TYPE_HOME1);
+    while (maze[x][y].type != CELL_TYPE_WALL && maze[x][y].type != CELL_TYPE_JAIL2 
+      && maze[x][y].type != CELL_TYPE_JAIL1 && maze[x][y].type != CELL_TYPE_UNBREAKABLE_WALL 
+      && maze[x][y].type != CELL_TYPE_HOME2 && maze[x][y].type != CELL_TYPE_HOME1 
+      && maze[x][y].playernum == 0);
 
-    p.x = x;
-    p.y = y;
+    // Note that x and y are flipped since the maze indexing accesses row first and then column
+    p.x = y;
+    p.y = x;
     return p;   
 
   }
 
   int playerHello(Proto_Session *s)
   {
-    printf("Player %d connected and said hello\n", nextPlayerIndex);
-    int playernum = nextPlayerIndex;
+    printf("Player %d connected and said hello\n", nextPlayerIndex+1);
+    int playernum = nextPlayerIndex + 1;
     printf("Assigned playernum\n");
+
+    // Add player and associated info to player array
     players[playernum].playernum = playernum;
     players[playernum].team = nextTeam;
     Point location = getSpawnLocation(nextTeam);
-    players[playernum].location = location;    
+    players[playernum].location = location;  
+    players[playernum].flag = 0;
+    players[playernum].mjolnir.hammerID = 0;
+    players[playernum].mjolnir.uses = 0; 
+
+    // Add player number to associated cell
     int x = location.x;
     int y = location.y;
     Cell *c = &(maze[y][x]);
     c->playernum = playernum;
     printf("Set player %d at location %d,%d\n", playernum, x, y);
 
+    // Send reply back to player with their playernum
     int rc;
     Proto_Msg_Hdr h;
     bzero(&h, sizeof(s));
@@ -573,8 +603,8 @@ dump()
     proto_session_body_marshall_int(s, playernum);
     proto_session_dump(s);
     rc = proto_session_send_msg(s, 1);
-    updateEvent();
     nextPlayerIndex++;
+    numPlayers = playernum;
     if (nextTeam == 1)
     {
       nextTeam = 2;
@@ -583,20 +613,31 @@ dump()
     {
       nextTeam = 1;
     }
+    dumpPlayers();
+    updateEvent();
     return rc;
   }
 
   int
   main(int argc, char **argv)
   { 
-
+    // initialize game board
+    load();
     // Initialize flag locations
     Point p1 = spawnFlag(1); // get location for flag 1
+    printf("Spawned first flag at location (%d,%d)\n", p1.x, p1.y);
+    srand(time(NULL));
     Point p2 = spawnFlag(2); // get location for flag 2
+    printf("Spawned second flag at location (%d,%d)\n", p2.x, p2.y);
     flags[0][0] = p1.x;
     flags[0][1] = p1.y;
     flags[1][0] = p2.x;
     flags[1][1] = p2.y;
+
+    // flags[0][0] = 60;
+    // flags[0][1] = 60;
+    // flags[1][0] = 105;
+    // flags[1][1] = 70;
 
     // Initialize hammer locations
     hammers[0][0] = HAMMER1X;
@@ -633,10 +674,12 @@ dump()
         // encode initial flag information
         if (i == flags[0][0] && j == flags[0][1]) // flag 1 start location
         {
+          printf("found flag 1 location on server\n");
           c->flag = 1;
         }
-        else if (i == flags[0][1] && j == flags[1][1]) // flag 2 start location
+        else if (i == flags[1][0] && j == flags[1][1]) // flag 2 start location
         {
+          printf("found flag 2 location on server\n");
           c->flag = 2;
         }
         else
@@ -651,6 +694,8 @@ dump()
     }
 
 
+
+
     printf("Hammer1X at %x\n", hammers[0][0]);
     printf("Hammer1Y at %x\n", hammers[0][1]);
 
@@ -662,8 +707,7 @@ dump()
     fprintf(stderr, "RPC Port: %d, Event Port: %d\n", proto_server_rpcport(), 
   	  proto_server_eventport());
 
-    // initialize game board
-    load();
+   
 
     if (proto_server_start_rpc_loop()<0) {
       fprintf(stderr, "ERROR: failed to start rpc loop\n");
