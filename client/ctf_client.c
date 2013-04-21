@@ -250,9 +250,14 @@ doMove(Client* C, char move)
   Proto_Session *s = proto_client_rpc_session(C->ph);
   proto_session_hdr_unmarshall(s, &(s->rhdr));
   char replycode = s->rbuf[0];
-
-  
-  
+  if (replycode == 'I')
+  {
+    printf("Sorry. Invalid move.\n");
+  }
+  else
+  {
+    printf("Could not read replycode.\n");
+  }
   return rc;
 
 }
@@ -306,6 +311,10 @@ docmd(Client *C)
   else if (strncmp(globals.in.data, "numwall", sizeof("numwall")-1)==0) rc = doFetchInfo(C, 'w');
   else if (strncmp(globals.in.data, "numfloor", sizeof("numfloor")-1)==0) rc = doFetchInfo(C, 'f');
   else if (strncmp(globals.in.data, "dump", sizeof("dump")-1)==0) rc = doDump(C);
+  else if (strncmp(globals.in.data, "moveup", sizeof("moveup")-1)==0) rc = doMove(C, 'w');
+  else if (strncmp(globals.in.data, "movedown", sizeof("movedown")-1)==0) rc = doMove(C, 's');
+  else if (strncmp(globals.in.data, "moveleft", sizeof("moveleft")-1)==0) rc = doMove(C, 'a');
+  else if (strncmp(globals.in.data, "moveright", sizeof("moveright")-1)==0) rc = doMove(C, 'd');
   else if (strncmp(globals.in.data, "quit", 
 		   sizeof("quit")-1)==0) rc = doQuit();
   else  printf("Unknown Command\n");
@@ -423,6 +432,7 @@ updateMap(Proto_Session *s)
   proto_session_dump(s);
   int offset = 0;
 
+
   // Get number of players (to read in players)
 
   if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &numPlayers);
@@ -430,12 +440,14 @@ updateMap(Proto_Session *s)
   printf("There are %d players, read from buffer\n", numPlayers);
   // Load players
 
+  Player tempPlayers[numPlayers+1];
+
   int m;
   for (m = 1; m < numPlayers+1; m++)
   {
     if (offset != -1)
     {
-      offset = proto_session_body_unmarshall_player(s, offset, &(players[m]));
+      offset = proto_session_body_unmarshall_player(s, offset, &(tempPlayers[m]));
     }
     else
     {
@@ -521,15 +533,29 @@ updateMap(Proto_Session *s)
   int a;
   for (a = 1; a < numPlayers+1; a++)
   {
-    Player *p = &(players[a]);
-    Point *point = &(p->location);
-    int x = point->x;
-    int y = point->y;
-    Cell *c = &(maze[x][y]);
-    c->mjolnir.hammerID = p->mjolnir.hammerID;
-    c->mjolnir.uses = p->mjolnir.uses;
-    c->flag = p->flag;
-    c->playernum = a;
+    Player *old_player = &(players[a]);
+    Player *new_player = &(tempPlayers[a]);
+    Point *old_location = &(old_player->location);
+    Point *new_location = &(new_player->location);
+    int oldx = old_location->x;
+    int oldy = old_location->y;
+    int newx = new_location->x;
+    int newy = new_location->y;
+    Cell *new_cell = &(maze[newx][newy]);
+    Cell *old_cell = &(maze[oldx][oldy]);
+
+    if (oldx != newx || oldy != newy)
+    {
+      // Player moved. Update all data structures.
+      // Update maze
+      old_cell->playernum = 0;
+      new_cell->playernum = a;
+
+    }
+    *old_location = *new_location;
+    if (new_player->mjolnir.hammerID != 0) old_player->mjolnir.hammerID = new_player->mjolnir.hammerID;
+    if (new_player->mjolnir.uses != 0) old_player->mjolnir.uses = new_player->mjolnir.uses;
+    if (new_player->flag != 0) old_player->flag = new_player->flag;
   }
   //dumpPlayers();
 

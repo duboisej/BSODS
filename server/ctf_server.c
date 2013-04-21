@@ -457,6 +457,37 @@ dumpMap()
     return rc;
   }
 
+
+  /* CheckMove - returns -1 if invalid move (wall/unbreakable wall cell. If there's 
+    another player at the new location, returns that player's number. If a valid move,
+    to an empty floor/home/jail cell, returns 1 */
+  int
+  checkMove(Cell *new_location)
+  {
+
+    Cell_Types newType = new_location->type;
+    // Check cell type
+    if (newType == CELL_TYPE_WALL || newType == CELL_TYPE_UNBREAKABLE_WALL)
+    {
+      return -1;
+    }
+    else
+    {
+      // Check if there's another player there
+      int otherPlayer = new_location->playernum;
+      if (otherPlayer != 0)
+      {
+        printf("Another player is there!\n");
+        return otherPlayer;
+      }
+      else
+      {
+        return 1;
+      }
+    }
+    
+  }
+
   int playerMove(Proto_Session *s)
   {
     int rc; 
@@ -465,35 +496,107 @@ dumpMap()
     Proto_Msg_Hdr h;
     char move = s->rbuf[0];
     int playernum;
-    proto_session_body_unmarshall_int(s, sizeof(Proto_Msg_Hdr) + 1, &playernum);
-    // Game logic - check for valid move and if valid, update map
+    proto_session_body_unmarshall_int(s, 1, &playernum);
 
-    int valid = 0; 
-
-    if(move = 'w')
+    Player *p = &(players[playernum]);
+    Point *curr_location = &(p->location);
+    int x = curr_location->x;
+    int y = curr_location->y;
+    int newx;
+    int newy;
+    Cell *old_location = &(maze[x][y]);
+    Cell *new_location;
+    if (move == 'w')
     {
-      //valid = checkMove(move, playernum);
-
+      newx = x - 1;
+      newy = y;
     }
-
-    if (valid)
+    else if (move == 'a')
     {
-      // send good (empty) reply
+      newx = x;
+      newy = y-1;
+    }
+    else if (move == 's')
+    {
+      newx = x + 1;
+      newy = y;
+    }
+    else if (move == 'd')
+    {
+      newx = x;
+      newy = y+1;
+    }
+    else
+    {
+      return -1;
+    }
+    new_location = &(maze[newx][newy]);
+    int valid = checkMove(new_location); 
+    
+
+    if (valid == 1)
+    {
+      printf("Valid move!\n");
+      // Update player location
+      curr_location->x = newx;
+      curr_location->y = newy;
+
+      // Remove player from old location in maze
+      old_location->playernum = 0;
+
+      // Add player to new location in maze
+      new_location->playernum = playernum;
+
+      // Get information about hammer/flag in new cell
+      int hammerID = new_location->mjolnir.hammerID;
+      int flag = new_location->flag;
+      int hammerIndex = hammerID - 1;
+      int flagIndex = flag - 1;
+
+      // If there's a hammer at the new location, and the player 
+      // currently isn't carrying a hammer
+      if (hammerID != 0 && p->mjolnir.hammerID == 0)
+      {
+        // Pick up hammer
+        p->mjolnir.hammerID = hammerID;
+        p->mjolnir.uses = new_location->mjolnir.uses;
+
+        // Update hammer location
+        hammers[hammerIndex][0] = newx;
+        hammers[hammerIndex][1] = newy;
+      }
+
+      // If there's a flag at the new location and the player
+      // currently isn't carrying a flag
+      if (flag != 0 && p->flag == 0)
+      {
+        // Pick up flag
+        p->flag = flag;
+
+        // Update flag location
+        flags[flagIndex][0] = newx;
+        flags[flagIndex][1] = newy;
+      }
+
+      // send good reply
       bzero(&h, sizeof(s));
       h.type = PROTO_MT_REP_BASE_MOVE;
       proto_session_hdr_marshall(s, &h);
+      proto_session_body_marshall_char(s, 'V'); // 'V' indicates valid move
       rc=proto_session_send_msg(s, 1);
     }
     else
     {
       // send reply with invalid
+      bzero(&h, sizeof(s));
       h.type = PROTO_MT_REP_BASE_MOVE;
       proto_session_hdr_marshall(s, &h);
       proto_session_body_marshall_char(s, 'I'); // 'I' in body indicates invalid move
       rc=proto_session_send_msg(s,1);
 
     }
-    // more logic here?
+    
+    updateEvent();
     
     return rc;
   }
