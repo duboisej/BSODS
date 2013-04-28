@@ -170,9 +170,18 @@ doConnect(Client *C) {
             proto_session_dump(s);
             int temp;
             proto_session_body_unmarshall_int(s, 0, &temp);
-            printf("Temp = %d\n", temp);
+            //printf("Temp = %d\n", temp);
             globals.playernum = temp;
             printf("Connected to %s:%d: You are player number %d", globals.host, globals.port, globals.playernum);
+            // Player *player = &(players[globals.playernum]);
+            // player->playernum = globals.playernum;
+            // player->location.x = 0;
+            // player->location.y = 0;
+            // player->team = playernum%2;
+            // player->flag = 0;
+            // player->mjolnir.hammerID = 0;
+            // player->mjolnir.uses = 0;
+            //dumpPlayers();
         } 
         else
         {
@@ -254,10 +263,6 @@ doMove(Client* C, char move)
   {
     printf("Sorry. Invalid move.\n");
   }
-  else
-  {
-    printf("Could not read replycode.\n");
-  }
   return rc;
 
 }
@@ -311,10 +316,10 @@ docmd(Client *C)
   else if (strncmp(globals.in.data, "numwall", sizeof("numwall")-1)==0) rc = doFetchInfo(C, 'w');
   else if (strncmp(globals.in.data, "numfloor", sizeof("numfloor")-1)==0) rc = doFetchInfo(C, 'f');
   else if (strncmp(globals.in.data, "dump", sizeof("dump")-1)==0) rc = doDump(C);
-  else if (strncmp(globals.in.data, "moveup", sizeof("moveup")-1)==0) rc = doMove(C, 'w');
-  else if (strncmp(globals.in.data, "movedown", sizeof("movedown")-1)==0) rc = doMove(C, 's');
-  else if (strncmp(globals.in.data, "moveleft", sizeof("moveleft")-1)==0) rc = doMove(C, 'a');
-  else if (strncmp(globals.in.data, "moveright", sizeof("moveright")-1)==0) rc = doMove(C, 'd');
+  else if (strncmp(globals.in.data, "w", sizeof("w")-1)==0) rc = doMove(C, 'w');
+  else if (strncmp(globals.in.data, "s", sizeof("s")-1)==0) rc = doMove(C, 's');
+  else if (strncmp(globals.in.data, "a", sizeof("a")-1)==0) rc = doMove(C, 'a');
+  else if (strncmp(globals.in.data, "d", sizeof("d")-1)==0) rc = doMove(C, 'd');
   else if (strncmp(globals.in.data, "quit", 
 		   sizeof("quit")-1)==0) rc = doQuit();
   else  printf("Unknown Command\n");
@@ -435,7 +440,7 @@ updateMap(Proto_Session *s)
 
   // Get number of players (to read in players)
 
-  if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &numPlayers);
+  offset = proto_session_body_unmarshall_int(s, offset, &numPlayers);
 
   printf("There are %d players, read from buffer\n", numPlayers);
   // Load players
@@ -529,18 +534,42 @@ updateMap(Proto_Session *s)
     return -1;
   }
 
+  // Dump temp player information
+    printf("Printing Temp Player information:\n");
+    printf("There are %d current players.\n", numPlayers);
+    int b;
+    for (b = 1; b < numPlayers+1; b++)
+    {
+      printf("Player %d:\n", b);
+      Player *p = &(tempPlayers[b]);
+      printf("\tPlayer number is %d\n", p->playernum);
+      printf("\tPlayer is on team number %d\n", p->team);
+      printf("\tLocation: %d,%d\n", p->location.x, p->location.y);
+      Hammer *h = &(p->mjolnir);
+      if (h->hammerID != 0)
+      {
+        printf("\tCarrying Hammer %d with %d uses left.\n", h->hammerID, h->uses);
+      }
+      if (p->flag != 0)
+      {
+        printf("\tCarrying Flag %d\n", p->flag);
+      }
+      printf("\n");
+      
+    }
+
   // Update map representation from player info
   int a;
   for (a = 1; a < numPlayers+1; a++)
   {
-    Player *old_player = &(players[a]);
-    Player *new_player = &(tempPlayers[a]);
-    Point *old_location = &(old_player->location);
-    Point *new_location = &(new_player->location);
-    int oldx = old_location->x;
-    int oldy = old_location->y;
-    int newx = new_location->x;
-    int newy = new_location->y;
+    Player *player = &(players[a]);
+    Player *temp_player = &(tempPlayers[a]);
+    Point *location = &(player->location);
+    Point *temp_location = &(temp_player->location);
+    int oldx = location->x;
+    int oldy = location->y;
+    int newx = temp_location->x;
+    int newy = temp_location->y;
     Cell *new_cell = &(maze[newx][newy]);
     Cell *old_cell = &(maze[oldx][oldy]);
 
@@ -548,14 +577,19 @@ updateMap(Proto_Session *s)
     {
       // Player moved. Update all data structures.
       // Update maze
-      old_cell->playernum = 0;
       new_cell->playernum = a;
+      old_cell->playernum = 0;
+      player->playernum = a;
+      player->team = temp_player->team;
+      location->x = newx;
+      location->y = newy;
+      if (temp_player->mjolnir.hammerID != 0) player->mjolnir.hammerID = temp_player->mjolnir.hammerID;
+      if (temp_player->mjolnir.uses != 0) player->mjolnir.uses = temp_player->mjolnir.uses;
+      if (temp_player->flag != 0) player->flag = temp_player->flag;
 
     }
-    *old_location = *new_location;
-    if (new_player->mjolnir.hammerID != 0) old_player->mjolnir.hammerID = new_player->mjolnir.hammerID;
-    if (new_player->mjolnir.uses != 0) old_player->mjolnir.uses = new_player->mjolnir.uses;
-    if (new_player->flag != 0) old_player->flag = new_player->flag;
+
+
   }
   //dumpPlayers();
 
@@ -577,6 +611,7 @@ updateMap(Proto_Session *s)
     if (c == 'H')
     {
       cell->type = CELL_TYPE_HOME1;
+      printf("found home cell\n");
     }
     else if (c == 'h')
     {

@@ -15,7 +15,7 @@
 
   Cell maze[201][201];
 
-  Player players[500];
+  Player players[300];
 
   int hammers[2][2];
   int flags[2][2];
@@ -54,7 +54,7 @@
 
             c = fgetc(map);
 
-            if (i == 0 || j == 0 || i == 199 || j == 199)
+            if (i == 0 || j == 0 || i == 199 || j == 199 || c=='$')
             {
                 
                 maze[i][j].type = CELL_TYPE_UNBREAKABLE_WALL;
@@ -92,6 +92,22 @@
             }
       } 
     }
+}
+
+int 
+dumpFlagLocations()
+{
+  printf("Printing Flag Locations:\n");
+  printf("Flag 1 is at location (%d,%d)\n", flags[0][0], flags[0][1]);
+  printf("Flag 2 is at location (%d,%d)\n", flags[1][0], flags[1][1]);
+}
+
+int
+dumpHammerLocations()
+{
+  printf("Printing Hammer Locations:\n");
+  printf("Hammer 1 is at location (%d,%d)\n", hammers[0][0], hammers[0][1]);
+  printf("Hammer 2 is at location (%d,%d)\n", hammers[1][0], hammers[1][1]);
 }
 
 int
@@ -154,11 +170,11 @@ dumpMap()
               }
               else if (c.flag == 1)
               {
-                printf("F");
+                printf("f");
               }
               else if (c.flag == 2)
               {
-                printf("f");
+                printf("F");
               }
               else if (celltype == CELL_TYPE_HOME1)
               {
@@ -229,6 +245,7 @@ dumpMap()
         }
         printf("\n");
     }
+    return 1;
 }
 
   int 
@@ -239,6 +256,9 @@ dumpMap()
     Proto_Msg_Hdr hdr;
 
     s = proto_server_event_session();
+
+    printf("Printing connected players for update\n");
+
     hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
     proto_session_hdr_marshall(s, &hdr);
 
@@ -286,50 +306,47 @@ dumpMap()
             Cell c = maze[i][j];
             Cell_Types celltype = c.type;
 
-            if (celltype == CELL_TYPE_HOME1 || celltype == CELL_TYPE_HOME2 || celltype == CELL_TYPE_JAIL1 || celltype == CELL_TYPE_JAIL2 || celltype == CELL_TYPE_FLOOR)
+            if (c.mjolnir.hammerID == 1)
             {
-              if (c.mjolnir.hammerID == 1)
-              {
-                proto_session_body_marshall_char(s, 'M');
-              }
-              else if (c.mjolnir.hammerID == 2)
-              {
-                proto_session_body_marshall_char(s, 'm');
-              }
-              else if (c.flag == 1)
-              {
-                printf("found flag 1 in updateEvent\n");
-                proto_session_body_marshall_char(s, 'F');
-              }
-              else if (c.flag == 2)
-              {
-                printf("found flag 2 in updateEvent\n");
-                proto_session_body_marshall_char(s, 'f');
-              }
-              else if (celltype == CELL_TYPE_HOME1)
-              {
-                  proto_session_body_marshall_char(s, 'H');
-                  //printf("H");
-              }
-              else if (celltype == CELL_TYPE_HOME2)
-              {
-                  proto_session_body_marshall_char(s, 'h');
-                  //printf("h");
-              }
-              else if (celltype == CELL_TYPE_JAIL1)
-              {
-                  proto_session_body_marshall_char(s, 'J');
-                  //printf("J");
-              }
-              else if (celltype == CELL_TYPE_JAIL2)
-              {
-                  proto_session_body_marshall_char(s, 'j');
-                  //printf("j");
-              } 
-              else if (celltype == CELL_TYPE_FLOOR)
-              {
-                  proto_session_body_marshall_char(s, ' ');
-              }
+              proto_session_body_marshall_char(s, 'M');
+            }
+            else if (c.mjolnir.hammerID == 2)
+            {
+              proto_session_body_marshall_char(s, 'm');
+            }
+            else if (c.flag == 1)
+            {
+              printf("found flag 1 in updateEvent\n");
+              proto_session_body_marshall_char(s, 'f');
+            }
+            else if (c.flag == 2)
+            {
+              printf("found flag 2 in updateEvent\n");
+              proto_session_body_marshall_char(s, 'F');
+            }
+            else if (celltype == CELL_TYPE_HOME1)
+            {
+                proto_session_body_marshall_char(s, 'H');
+                //printf("H");
+            }
+            else if (celltype == CELL_TYPE_HOME2)
+            {
+                proto_session_body_marshall_char(s, 'h');
+                //printf("h");
+            }
+            else if (celltype == CELL_TYPE_JAIL1)
+            {
+                proto_session_body_marshall_char(s, 'J');
+                //printf("J");
+            }
+            else if (celltype == CELL_TYPE_JAIL2)
+            {
+                proto_session_body_marshall_char(s, 'j');
+                //printf("j");
+            } 
+            else if (celltype == CELL_TYPE_FLOOR)
+            {
+                proto_session_body_marshall_char(s, ' ');
             }
             else if (celltype == CELL_TYPE_WALL)
             {
@@ -350,41 +367,43 @@ dumpMap()
     proto_session_body_marshall_char(s, 'z'); // marks end of maze
 
     proto_session_dump(s);
-    proto_server_post_event();  
+    proto_server_post_event(); 
+    //dumpMap(); 
+    dumpPlayers();
   }
 
-  int 
-  moveEvent(int x, int y, int playernum)
-  {
-    printf("moveEvent called.\n");
-    Proto_Session *s;
-    Proto_Msg_Hdr hdr;
+  // int 
+  // moveEvent(int x, int y, int playernum)
+  // {
+  //   printf("moveEvent called.\n");
+  //   Proto_Session *s;
+  //   Proto_Msg_Hdr hdr;
 
-    s = proto_server_event_session();
-    hdr.type = PROTO_MT_EVENT_BASE_MOVE;
-    proto_session_hdr_marshall(s, &hdr);
-    proto_session_body_marshall_int(s, x);
-    proto_session_body_marshall_int(s, y);
-    proto_session_body_marshall_int(s, playernum);
-    proto_session_dump(s);
-    proto_server_post_event();  
-  }
+  //   s = proto_server_event_session();
+  //   hdr.type = PROTO_MT_EVENT_BASE_MOVE;
+  //   proto_session_hdr_marshall(s, &hdr);
+  //   proto_session_body_marshall_int(s, x);
+  //   proto_session_body_marshall_int(s, y);
+  //   proto_session_body_marshall_int(s, playernum);
+  //   proto_session_dump(s);
+  //   proto_server_post_event();  
+  // }
 
-  int 
-  breakWallEvent(int x, int y)
-  {
-    printf("breakWallEvent called.\n");
-    Proto_Session *s;
-    Proto_Msg_Hdr hdr;
+  // int 
+  // breakWallEvent(int x, int y)
+  // {
+  //   printf("breakWallEvent called.\n");
+  //   Proto_Session *s;
+  //   Proto_Msg_Hdr hdr;
 
-    s = proto_server_event_session();
-    hdr.type = PROTO_MT_EVENT_BASE_MOVE;
-    proto_session_hdr_marshall(s, &hdr);
-    proto_session_body_marshall_int(s, x);
-    proto_session_body_marshall_int(s, y);
-    proto_session_dump(s);
-    proto_server_post_event();  
-  }
+  //   s = proto_server_event_session();
+  //   hdr.type = PROTO_MT_EVENT_BASE_MOVE;
+  //   proto_session_hdr_marshall(s, &hdr);
+  //   proto_session_body_marshall_int(s, x);
+  //   proto_session_body_marshall_int(s, y);
+  //   proto_session_dump(s);
+  //   proto_server_post_event();  
+  // }
 
   char MenuString[] =
     "d/D-debug on/off u-update clients q-quit";
@@ -407,6 +426,8 @@ dumpMap()
     case 'q':
       rc=-1;
       break;
+    case 'm':
+      rc = dumpMap();
     case '\n':
     case ' ':
       rc=1;
@@ -464,7 +485,6 @@ dumpMap()
   int
   checkMove(Cell *new_location)
   {
-
     Cell_Types newType = new_location->type;
     // Check cell type
     if (newType == CELL_TYPE_WALL || newType == CELL_TYPE_UNBREAKABLE_WALL)
@@ -477,12 +497,12 @@ dumpMap()
       int otherPlayer = new_location->playernum;
       if (otherPlayer != 0)
       {
-        printf("Another player is there!\n");
+        printf("Player %d is there!\n", otherPlayer);
         return otherPlayer;
       }
       else
       {
-        return 1;
+        return 0;
       }
     }
     
@@ -531,10 +551,11 @@ dumpMap()
       return -1;
     }
     new_location = &(maze[newx][newy]);
+    printf("checking move to location (%d, %d)...\n", newx, newy);
     int valid = checkMove(new_location); 
     
 
-    if (valid == 1)
+    if (valid == 0)
     {
       printf("Valid move!\n");
       // Update player location
@@ -604,7 +625,7 @@ dumpMap()
   int 
   getLocationInRange(int min, int max)
   {
-    srand(time(NULL));
+    //srand(time(NULL));
     int x = min + (rand() % (max - min));
     return x;
   }
@@ -660,17 +681,14 @@ dumpMap()
 
     do
     {
-      x = getLocationInRange(xmin, xmax);
-      y = getLocationInRange(ymin, ymax);
+      y = getLocationInRange(xmin, xmax);
+      x = getLocationInRange(ymin, ymax);
     } 
-    while (maze[x][y].type != CELL_TYPE_WALL && maze[x][y].type != CELL_TYPE_JAIL2 
-      && maze[x][y].type != CELL_TYPE_JAIL1 && maze[x][y].type != CELL_TYPE_UNBREAKABLE_WALL 
-      && maze[x][y].type != CELL_TYPE_HOME2 && maze[x][y].type != CELL_TYPE_HOME1 
-      && maze[x][y].playernum == 0);
+    while (maze[x][y].type != CELL_TYPE_FLOOR && maze[x][y].playernum == 0);
 
     // Note that x and y are flipped since the maze indexing accesses row first and then column
-    p.x = y;
-    p.y = x;
+    p.x = x;
+    p.y = y;
     return p;   
 
   }
@@ -693,7 +711,7 @@ dumpMap()
     // Add player number to associated cell
     int x = location.x;
     int y = location.y;
-    Cell *c = &(maze[y][x]);
+    Cell *c = &(maze[x][y]);
     c->playernum = playernum;
     printf("Set player %d at location %d,%d\n", playernum, x, y);
 
@@ -729,9 +747,11 @@ dumpMap()
     // Initialize flag locations
     Point p1 = spawnFlag(1); // get location for flag 1
     printf("Spawned first flag at location (%d,%d)\n", p1.x, p1.y);
-    srand(time(NULL));
+    maze[p1.x][p1.y].flag = 1;
+    //srand(time(NULL));
     Point p2 = spawnFlag(2); // get location for flag 2
     printf("Spawned second flag at location (%d,%d)\n", p2.x, p2.y);
+    maze[p2.x][p2.y].flag = 2;
     flags[0][0] = p1.x;
     flags[0][1] = p1.y;
     flags[1][0] = p2.x;
@@ -774,21 +794,21 @@ dumpMap()
           c->mjolnir.uses = 0;
         }
 
-        // encode initial flag information
-        if (i == flags[0][0] && j == flags[0][1]) // flag 1 start location
-        {
-          printf("found flag 1 location on server\n");
-          c->flag = 1;
-        }
-        else if (i == flags[1][0] && j == flags[1][1]) // flag 2 start location
-        {
-          printf("found flag 2 location on server\n");
-          c->flag = 2;
-        }
-        else
-        {
-          c->flag = 0;
-        }
+        // // encode initial flag information
+        // if (i == flags[0][0] && j == flags[0][1]) // flag 1 start location
+        // {
+        //   printf("found flag 1 location on server\n");
+        //   c->flag = 1;
+        // }
+        // else if (i == flags[1][0] && j == flags[1][1]) // flag 2 start location
+        // {
+        //   printf("found flag 2 location on server\n");
+        //   c->flag = 2;
+        // }
+        // else
+        // {
+        //   c->flag = 0;
+        // }
 
         // set initial player number for each cell to 0        
         c->playernum = 0;

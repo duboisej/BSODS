@@ -241,14 +241,14 @@ proto_session_body_marshall_hammer(Proto_Session *s, Hammer *h)
 {
   //printf("Got into marshall_hammer\n");
   int rc = -1;
-  //printf("Received hammerID = %d\n", h->hammerID);
+  printf("Received hammerID = %d\n", h->hammerID);
   if (proto_session_body_marshall_int(s, h->hammerID) != -1)
   {
-    //printf("Marshalled hammerID\n");
+    printf("Marshalled hammerID %d\n", h->hammerID);
     rc = proto_session_body_marshall_int(s, h->uses);
     if (rc != -1)
     {
-      //printf("Marshalled uses\n");
+      printf("Marshalled %d uses\n", h->uses);
     }
   }
   return rc;
@@ -259,10 +259,8 @@ extern int
 proto_session_body_unmarshall_hammer(Proto_Session *s, int offset, Hammer *h)
 {
   //printf("Got into unmarshall_hammer\n");
-  int hammerID;
-  int uses;
-  offset = proto_session_body_unmarshall_int(s, offset, &hammerID);
-  if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &uses);
+  offset = proto_session_body_unmarshall_int(s, offset, &(h->hammerID));
+  if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &(h->uses));
   return offset;
 }
 
