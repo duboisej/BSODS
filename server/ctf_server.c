@@ -508,6 +508,129 @@ dumpMap()
     
   }
 
+  int 
+  getLocationInRange(int min, int max)
+  {
+    //srand(time(NULL));
+    int x = min + (rand() % (max - min));
+    return x;
+  }
+
+  Point getSpawnLocation(int team)
+  {
+    int x;
+    int y;
+    Cell *c;
+    do
+    {
+      c = &(maze[x][y]);
+      if (team == 1)
+      {
+        x = getLocationInRange(2, 11);
+      }
+      else 
+      {
+        x = getLocationInRange(188, 197);
+      }
+      y = getLocationInRange(90, 108);
+
+    }
+    while(c->playernum != 0 && y != 95 && x != 190 && x != 10);
+
+    // Note that x and y are flipped since the maze indexing accesses row first and then column
+    Point p;
+    p.x = y;
+    p.y = x;
+    return p;
+  }
+
+  Point jailSpawn(int playernum)
+  {
+    int team = (playernum+1) % 2; // Opposite team's jail
+    int x;
+    int y;
+    Cell *c;
+    do
+    {
+      c = &(maze[x][y]);
+      if (team == 1)
+      {
+        x = getLocationInRange(90, 97);
+      }
+      else 
+      {
+        x = getLocationInRange(102, 109);
+      }
+      y = getLocationInRange(90, 108);
+
+    }
+    while(c->playernum != 0 && y != 95 && x != 190 && x != 10);
+
+    // Note that x and y are flipped since the maze indexing accesses row first and then column
+    Point p;
+    p.x = y;
+    p.y = x;
+    return p;
+  }
+
+    int
+  tagPlayer(int playernum)
+  {
+    Player *p = &(players[playernum]);
+    int playerTeam = p->team;
+    Point *curr_location = &(p->location);
+    int x = curr_location->x;
+    int y = curr_location->y;
+    Cell *old_location = &(maze[x][y]);
+    Point jailLocation = jailSpawn(playernum);
+    Cell *new_location = &(maze[jailLocation.x][jailLocation.y]);
+
+    // Update player location
+    curr_location->x = jailLocation.x;
+    curr_location->y = jailLocation.y;
+
+    // Remove player from old location in maze
+    old_location->playernum = 0;
+
+    // Add player to new location in maze
+    new_location->playernum = playernum;
+  }
+
+  Point 
+  spawnFlag(int team)
+  {
+    Point p;
+    int x;
+    int y;
+    int xmin;
+    int xmax;
+    int ymin = 1;
+    int ymax = 199;
+    if (team == 1)
+    {
+      xmin = 1; 
+      xmax = 100;
+    }
+    else
+    {
+      xmin = 101;
+      xmax = 199;
+    }
+
+    do
+    {
+      y = getLocationInRange(xmin, xmax);
+      x = getLocationInRange(ymin, ymax);
+    } 
+    while (maze[x][y].type != CELL_TYPE_FLOOR && maze[x][y].playernum == 0);
+
+    // Note that x and y are flipped since the maze indexing accesses row first and then column
+    p.x = x;
+    p.y = y;
+    return p;   
+
+  }
+
   int playerMove(Proto_Session *s)
   {
     int rc; 
@@ -519,6 +642,7 @@ dumpMap()
     proto_session_body_unmarshall_int(s, 1, &playernum);
 
     Player *p = &(players[playernum]);
+    int playerTeam = p->team;
     Point *curr_location = &(p->location);
     int x = curr_location->x;
     int y = curr_location->y;
@@ -555,7 +679,7 @@ dumpMap()
     int valid = checkMove(new_location); 
     
 
-    if (valid == 0)
+    if (valid == 0 || playerTeam != valid%2)
     {
       printf("Valid move!\n");
       // Update player location
@@ -599,6 +723,11 @@ dumpMap()
         flags[flagIndex][1] = newy;
       }
 
+      if (valid > 0)
+      {
+        rc = tagPlayer(valid);
+      }
+
       // send good reply
       bzero(&h, sizeof(s));
       h.type = PROTO_MT_REP_BASE_MOVE;
@@ -622,77 +751,6 @@ dumpMap()
     return rc;
   }
 
-  int 
-  getLocationInRange(int min, int max)
-  {
-    //srand(time(NULL));
-    int x = min + (rand() % (max - min));
-    return x;
-  }
-
-  Point getSpawnLocation(int team)
-  {
-    int x;
-    int y;
-    Cell *c;
-    do
-    {
-      c = &(maze[x][y]);
-      if (team == 1)
-      {
-        x = getLocationInRange(2, 11);
-      }
-      else 
-      {
-        x = getLocationInRange(188, 197);
-      }
-      y = getLocationInRange(90, 108);
-
-    }
-    while(c->playernum != 0 && y != 95 && x != 190 && x != 10);
-
-    // Note that x and y are flipped since the maze indexing accesses row first and then column
-    Point p;
-    p.x = y;
-    p.y = x;
-    return p;
-  }
-
-  Point 
-  spawnFlag(int team)
-  {
-    Point p;
-    int x;
-    int y;
-    int xmin;
-    int xmax;
-    int ymin = 1;
-    int ymax = 199;
-    if (team == 1)
-    {
-      xmin = 1; 
-      xmax = 100;
-    }
-    else
-    {
-      xmin = 101;
-      xmax = 199;
-    }
-
-    do
-    {
-      y = getLocationInRange(xmin, xmax);
-      x = getLocationInRange(ymin, ymax);
-    } 
-    while (maze[x][y].type != CELL_TYPE_FLOOR && maze[x][y].playernum == 0);
-
-    // Note that x and y are flipped since the maze indexing accesses row first and then column
-    p.x = x;
-    p.y = y;
-    return p;   
-
-  }
-
   int playerHello(Proto_Session *s)
   {
     printf("Player %d connected and said hello\n", nextPlayerIndex+1);
@@ -702,7 +760,18 @@ dumpMap()
     // Add player and associated info to player array
     players[playernum].playernum = playernum;
     players[playernum].team = nextTeam;
-    Point location = getSpawnLocation(nextTeam);
+    Point location;
+    // if (playernum == 1) // test tagging - spawn player 1 on wrong side of the board 
+                           // to make tagging easier
+    // {
+    //   location.x = 99;
+    //   location.y = 183;
+    // }
+    // else
+    // {
+    //   location = getSpawnLocation(nextTeam);
+    // }
+    location = getSpawnLocation(nextTeam);
     players[playernum].location = location;  
     players[playernum].flag = 0;
     players[playernum].mjolnir.hammerID = 0;
