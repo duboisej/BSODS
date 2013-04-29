@@ -1,0 +1,30 @@
+Specification:   18/20
+Architecture:    15/20
+Presentation:    10/10
+Code:             7/12
+
+Y  numhome 1       : 190     
+Y  numhome 2       : 190
+Y  numjail 1       : 152
+Y  numjail 2       : 152
+N  numwall         : 19525
+N  numfloor        : 20475
+Y  dim             : 200 x 200
+N  cinfo <0,0>     : 
+      Cell (0,0):
+	Team 1
+	Is Occupied? 0
+	Type: WALL
+N  cinfo <199,199> :
+      Cell (199,199):
+	Team 2
+	Is Occupied? 0
+	Type: WALL
+N  cinfo <189,189> :
+      Cell (189,189):
+	Team 2
+	Is Occupied? 0
+	Type: WALL
+Y  dump            :
+Y  quit            :
+
