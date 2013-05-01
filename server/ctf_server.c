@@ -483,7 +483,7 @@ dumpMap()
     another player at the new location, returns that player's number. If a valid move,
     to an empty floor/home/jail cell, returns 1 */
   int
-  checkMove(Cell *new_location)
+  checkMove(int playernum, Cell *new_location)
   {
     Cell_Types newType = new_location->type;
     // Check cell type
@@ -498,7 +498,13 @@ dumpMap()
       if (otherPlayer != 0)
       {
         printf("Player %d is there!\n", otherPlayer);
-        return otherPlayer;
+        if (players[otherPlayer].team == players[playernum].team) {
+          printf("Player %d tried to tag teammate #%d!\n", playernum, otherPlayer);
+          return -1;
+        } else {
+          printf("Player %d is trying to tag player #%d!\n", playernum, otherPlayer);
+          return otherPlayer;
+        } 
       }
       else
       {
@@ -576,8 +582,11 @@ dumpMap()
     int
   tagPlayer(int playernum)
   {
+    printf("issues1");
     Player *p = &(players[playernum]);
+    printf("issues2");
     int playerTeam = p->team;
+    printf("issues3");
     Point *curr_location = &(p->location);
     int x = curr_location->x;
     int y = curr_location->y;
@@ -676,12 +685,29 @@ dumpMap()
     }
     new_location = &(maze[newx][newy]);
     printf("checking move to location (%d, %d)...\n", newx, newy);
-    int valid = checkMove(new_location); 
-    
+    int valid = checkMove(playernum, new_location); 
+    printf("Valid = %d!\n", valid);
+    int side = 0;
+    if (newy > 99) side = 2;
+    else side = 1;
+    printf("Valid = %d!\n", valid);
 
-    if (valid == 0 || playerTeam != valid%2)
+    if (side != playerTeam && valid > 0) {
+      valid = playernum;
+    }
+    
+    // || playerTeam != valid%2
+    if (valid != -1)
     {
       printf("Valid move!\n");
+
+      // If player is there, tag them first
+      if (valid > 0)
+      {
+        printf("made it into if\n");
+        rc = tagPlayer(valid);
+      }
+      printf("made it!\n");
       // Update player location
       curr_location->x = newx;
       curr_location->y = newy;
@@ -723,10 +749,6 @@ dumpMap()
         flags[flagIndex][1] = newy;
       }
 
-      if (valid > 0)
-      {
-        rc = tagPlayer(valid);
-      }
 
       // send good reply
       bzero(&h, sizeof(s));
@@ -761,17 +783,21 @@ dumpMap()
     players[playernum].playernum = playernum;
     players[playernum].team = nextTeam;
     Point location;
-    // if (playernum == 1) // test tagging - spawn player 1 on wrong side of the board 
-                           // to make tagging easier
-    // {
-    //   location.x = 99;
-    //   location.y = 183;
-    // }
-    // else
-    // {
-    //   location = getSpawnLocation(nextTeam);
-    // }
-    location = getSpawnLocation(nextTeam);
+    if (playernum == 1) // test tagging - spawn player 1 on wrong side of the board 
+    {
+      location.x = 99;
+      location.y = 183;
+    }
+    else if (playernum == 2) // test tagging - spawn player 1 on wrong side of the board 
+    {
+      location.x = 99;
+      location.y = 184;
+    }
+    else
+    {
+      location = getSpawnLocation(nextTeam);
+    }
+    // location = getSpawnLocation(nextTeam);
     players[playernum].location = location;  
     players[playernum].flag = 0;
     players[playernum].mjolnir.hammerID = 0;
