@@ -550,7 +550,7 @@ dumpMap()
     return p;
   }
 
-  Point jailSpawn(int playernum)
+  Point *jailSpawn(int playernum)
   {
     int team = (playernum+1) % 2; // Opposite team's jail
     int x;
@@ -576,33 +576,7 @@ dumpMap()
     Point p;
     p.x = y;
     p.y = x;
-    return p;
-  }
-
-    int
-  tagPlayer(int playernum)
-  {
-    printf("issues1");
-    Player *p = &(players[playernum]);
-    printf("issues2");
-    int playerTeam = p->team;
-    printf("issues3");
-    Point *curr_location = &(p->location);
-    int x = curr_location->x;
-    int y = curr_location->y;
-    Cell *old_location = &(maze[x][y]);
-    Point jailLocation = jailSpawn(playernum);
-    Cell *new_location = &(maze[jailLocation.x][jailLocation.y]);
-
-    // Update player location
-    curr_location->x = jailLocation.x;
-    curr_location->y = jailLocation.y;
-
-    // Remove player from old location in maze
-    old_location->playernum = 0;
-
-    // Add player to new location in maze
-    new_location->playernum = playernum;
+    return &p;
   }
 
   Point 
@@ -639,6 +613,34 @@ dumpMap()
     return p;   
 
   }
+
+
+  // int
+  // tagPlayer(int playernum)
+  // {
+  //   //printf("issues1");
+  //   Player *p = &(players[playernum]);
+  //   //printf("issues2");
+  //   int playerTeam = p->team;
+  //   //printf("issues3");
+  //   Point *curr_location = &(p->location);
+  //   int x = curr_location->x;
+  //   int y = curr_location->y;
+  //   Cell *old_location = &(maze[x][y]);
+  //   Point jailLocation = jailSpawn(playernum);
+  //   Cell *new_location = &(maze[jailLocation.x][jailLocation.y]);
+
+  //   // Update player location
+  //   curr_location->x = jailLocation.x;
+  //   curr_location->y = jailLocation.y;
+
+  //   // Remove player from old location in maze
+  //   old_location->playernum = 0;
+
+  //   // Add player to new location in maze
+  //   new_location->playernum = playernum;
+  //   return 1;
+  // }
 
   int playerMove(Proto_Session *s)
   {
@@ -705,7 +707,8 @@ dumpMap()
       if (valid > 0)
       {
         printf("made it into if\n");
-        rc = tagPlayer(valid);
+        printf("Valid is %d\n", valid);
+        tagPlayer(valid);
       }
       printf("made it!\n");
       // Update player location
@@ -771,6 +774,34 @@ dumpMap()
     updateEvent();
     
     return rc;
+  }
+
+  
+  int
+  tagPlayer(int num)
+  {
+    //printf("Tagging player %d\n", num);
+    //printf("Got into tagplayer\n");
+    Player *p = &(players[num]);
+    int playerTeam = p->team;
+    Point *curr_location = &(p->location);
+    int x = curr_location->x;
+    int y = curr_location->y;
+    Cell *old_location = &(maze[x][y]);
+    Point *jailLocation = jailSpawn(num);
+    int jailx = jailLocation->x;
+    int jaily = jailLocation->y;
+    Cell *new_location = &(maze[jailx][jaily]);
+    // Update player location
+    curr_location->x = jailx;
+    curr_location->y = jaily;
+
+    // // Remove player from old location in maze
+    old_location->playernum = 0;
+
+    // // Add player to new location in maze
+    new_location->playernum = num;
+    return 1;
   }
 
   int playerHello(Proto_Session *s)
