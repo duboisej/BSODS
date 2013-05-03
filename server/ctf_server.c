@@ -710,16 +710,17 @@ dumpMap()
         printf("Valid is %d\n", valid);
         tagPlayer(valid);
       }
-      printf("made it!\n");
-      // Update player location
-      curr_location->x = newx;
-      curr_location->y = newy;
+      else
+      {
+        curr_location->x = newx;
+        curr_location->y = newy;
 
-      // Remove player from old location in maze
-      old_location->playernum = 0;
+        // Remove player from old location in maze
+        old_location->playernum = 0;
 
-      // Add player to new location in maze
-      new_location->playernum = playernum;
+        // Add player to new location in maze
+        new_location->playernum = playernum;
+      }
 
       // Get information about hammer/flag in new cell
       int hammerID = new_location->mjolnir.hammerID;
@@ -780,8 +781,8 @@ dumpMap()
   int
   tagPlayer(int num)
   {
-    //printf("Tagging player %d\n", num);
-    //printf("Got into tagplayer\n");
+    printf("Tagging player %d\n", num);
+    printf("Got into tagplayer\n");
     Player *p = &(players[num]);
     int playerTeam = p->team;
     Point *curr_location = &(p->location);
