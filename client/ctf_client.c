@@ -223,22 +223,22 @@ doFetchInfo(Client* C, char cell)
   }
   else if (cell == 'H')
   {
-    printf("There are %d home cells for team 1.\n", *replycode);
+    printf("There are %d home cells for team 2.\n", *replycode);
     rc = 1;
   }
   else if (cell == 'h')
   {
-    printf("There are %d home cells for team 2.\n", *replycode);
+    printf("There are %d home cells for team 1.\n", *replycode);
     rc = 1;
   }
   else if (cell == 'J')
   {
-    printf("There are %d jail cells for team 1.\n", *replycode);
+    printf("There are %d jail cells for team 2.\n", *replycode);
     rc = 1;
   }
   else if (cell == 'j')
   {
-    printf("There are %d jail cells for team 2.\n", *replycode);
+    printf("There are %d jail cells for team 1.\n", *replycode);
     rc = 1;
   }
   else if (cell == 'w')
@@ -610,20 +610,20 @@ updateMap(Proto_Session *s)
     Cell *cell = &(maze[i][j]);
     if (c == 'H')
     {
-      cell->type = CELL_TYPE_HOME1;
-      printf("found home cell\n");
+      cell->type = CELL_TYPE_HOME2;
+      //printf("found home cell\n");
     }
     else if (c == 'h')
     {
-      cell->type = CELL_TYPE_HOME2;
+      cell->type = CELL_TYPE_HOME1;
     }
     else if (c == 'J')
     {
-      cell->type = CELL_TYPE_JAIL1;
+      cell->type = CELL_TYPE_JAIL2;
     }
     else if (c == 'j')
     {
-      cell->type = CELL_TYPE_JAIL2;
+      cell->type = CELL_TYPE_JAIL1;
     }
     else if (c == '$')
     {
@@ -636,21 +636,21 @@ updateMap(Proto_Session *s)
     }
     else if (c == 'M')
     {
-      cell->mjolnir.hammerID = 1;
+      cell->mjolnir.hammerID = 2;
     }
     else if (c == 'm')
     {
-      cell->mjolnir.hammerID = 2;
+      cell->mjolnir.hammerID = 1;
     }
     else if (c == 'F')
     {
-      printf("found flag 1 location on client\n");
-      cell->flag = 1;
+      //printf("found flag 1 location on client\n");
+      cell->flag = 2;
     }
     else if (c == 'f')
     {
-      printf("found flag 2 location on client\n");
-      cell->flag = 2;
+      //printf("found flag 2 location on client\n");
+      cell->flag = 1;
     }
 
     if (j++ == 200)
@@ -735,23 +735,23 @@ dumpMap()
               || celltype == CELL_TYPE_JAIL1 || celltype == CELL_TYPE_JAIL2 
               || celltype == CELL_TYPE_FLOOR)
             {
-              if (c.mjolnir.hammerID == 1)
+              if (c.mjolnir.hammerID == 2)
               {
                 printf("M");
               }
-              else if (c.mjolnir.hammerID == 2)
+              else if (c.mjolnir.hammerID == 1)
               {
                 printf("m");
               }
-              else if (c.flag == 1)
+              else if (c.flag == 2)
               {
                 printf("F");
               }
-              else if (c.flag == 2)
+              else if (c.flag == 1)
               {
                 printf("f");
               }
-              else if (celltype == CELL_TYPE_HOME1)
+              else if (celltype == CELL_TYPE_HOME2)
               {
                   if (c.playernum != 0)
                   {
@@ -762,7 +762,7 @@ dumpMap()
                     printf("H");
                   }
               }
-              else if (celltype == CELL_TYPE_HOME2)
+              else if (celltype == CELL_TYPE_HOME1)
               {
                   if (c.playernum != 0)
                   {
@@ -773,7 +773,7 @@ dumpMap()
                     printf("h");
                   }
               }
-              else if (celltype == CELL_TYPE_JAIL1)
+              else if (celltype == CELL_TYPE_JAIL2)
               {
                   if (c.playernum != 0)
                   {
@@ -784,7 +784,7 @@ dumpMap()
                     printf("J");
                   }
               }
-              else if (celltype == CELL_TYPE_JAIL2)
+              else if (celltype == CELL_TYPE_JAIL1)
               {
                   if (c.playernum != 0)
                   {

@@ -47,6 +47,7 @@ typedef struct {
   int playernum;
   int team;
   int flag;
+  int jail;
 } Player;
 
 
