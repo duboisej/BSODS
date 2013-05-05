@@ -661,7 +661,7 @@ dumpMap()
       Player *p = &(players[i]);
       if (p->jail == jail)
       {
-        printf("Freeing player %d\n", i);
+        //printf("Freeing player %d\n", i);
         p->jail = 0;
         printf("Set jail to 0\n");
         Point old_location = p->location;
@@ -677,7 +677,7 @@ dumpMap()
         int x = location.x;
         printf("Grabbed x value from new location\n");
         int y = location.y;
-        printf("Transporting player %d back to his home at location (%d, %d)\n", i, x, y);
+        //printf("Transporting player %d back to his home at location (%d, %d)\n", i, x, y);
         Cell *c = &(maze[x][y]);
         c->playernum = i;
       }
