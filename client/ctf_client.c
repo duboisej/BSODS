@@ -885,9 +885,21 @@ dumpPlayers()
 int 
 main(int argc, char **argv)
 {
+
   Client c;
 
   initGlobals();
+
+  if (argc > 1)
+  {
+    char *input;
+    argv++;
+    input = *(argv++);
+    //printf("%s\n", input);
+    globals.in.len = strlen(input);
+    strcpy(globals.in.data, input);
+  }
+  
 
   if (clientInit(&c) < 0) {
     fprintf(stderr, "ERROR: clientInit failed\n");
@@ -902,6 +914,10 @@ main(int argc, char **argv)
   h = &updateMap;
   proto_client_set_event_handler(c.ph, PROTO_MT_EVENT_BASE_UPDATE, h);
 
+  if (globals.in.len > 0)
+  {
+    docmd(&c);
+  }
   shell(&c);
 
   return 0;
