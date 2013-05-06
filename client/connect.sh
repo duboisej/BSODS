@@ -1,2 +1,2 @@
-connect 128.197.11.31:56219
-moveup
+#!/bin/bash
+./client "connect 128.197.11.31:$1"

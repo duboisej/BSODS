@@ -160,7 +160,11 @@ dumpMap()
               || celltype == CELL_TYPE_JAIL1 || celltype == CELL_TYPE_JAIL2 
               || celltype == CELL_TYPE_FLOOR)
             {
-              if (c.mjolnir.hammerID == 2)
+              if (c.playernum != 0)
+              {
+                printf("%d", c.playernum);
+              }
+              else if (c.mjolnir.hammerID == 2)
               {
                 printf("M");
               }
@@ -306,13 +310,18 @@ dumpMap()
             Cell c = maze[i][j];
             Cell_Types celltype = c.type;
 
+            // if (i == 100 && j == 17)
+            // {
+            //   printf("Cell type at location (%d, %d) is: %d\n", i, j, celltype);
+            // }
+
             if (c.mjolnir.hammerID == 1)
             {
-              proto_session_body_marshall_char(s, 'M');
+              proto_session_body_marshall_char(s, 'm');
             }
             else if (c.mjolnir.hammerID == 2)
             {
-              proto_session_body_marshall_char(s, 'm');
+              proto_session_body_marshall_char(s, 'M');
             }
             else if (c.flag == 1)
             {
@@ -346,10 +355,18 @@ dumpMap()
             } 
             else if (celltype == CELL_TYPE_FLOOR)
             {
+              // if (i == 100 && j == 17)
+              //   {
+              //     printf("Found floor at 100, 17\n");
+              //   }
                 proto_session_body_marshall_char(s, ' ');
             }
             else if (celltype == CELL_TYPE_WALL)
             {
+                // if (i == 100 && j == 17)
+                // {
+                //   printf("Found wall at 100, 17\n");
+                // }
                 proto_session_body_marshall_char(s, '#');
                 //printf("#");
             }
@@ -487,10 +504,34 @@ dumpMap()
   {
     Cell_Types newType = new_location->type;
     // Check cell type
-    if (newType == CELL_TYPE_WALL || newType == CELL_TYPE_UNBREAKABLE_WALL)
+    if (newType == CELL_TYPE_UNBREAKABLE_WALL)
+    {
+      return -1;
+    }
+    else if (newType == CELL_TYPE_WALL)
     {
       // player is trying to move into wall
-      return -1;
+      int hammer = players[playernum].mjolnir.hammerID;
+      int uses = players[playernum].mjolnir.uses;
+      if (hammer == 0)
+      {
+        return -1;
+      }
+      else if (hammer == 1 && uses > 0)
+      {
+        // player has hammer 1
+        return 301; //? 
+
+      }
+      else if (hammer == 2 && uses > 0)
+      {
+        // player has hammer 1
+        return 302;
+      }
+      else
+      {
+        return -1;
+      }
     }
     else if (newType == CELL_TYPE_FLOOR && players[playernum].jail != 0)
     {
@@ -731,11 +772,22 @@ dumpMap()
     new_location = &(maze[newx][newy]);
     printf("checking move to location (%d, %d)...\n", newx, newy);
     int valid = checkMove(playernum, new_location); 
-    printf("Valid = %d!\n", valid);
+
+    if (valid == 301 || valid == 302)
+    {
+      // Player is breaking a wall with Hammer 1
+      printf("player %d is breaking a wall\n", playernum);
+      valid = 0;
+      printf("Setting cell at location (%d, %d) to be type floor\n", newx, newy);
+      maze[newx][newy].type = CELL_TYPE_FLOOR;
+      players[playernum].mjolnir.uses--;
+    }
+
+    //printf("Valid = %d!\n", valid);
     int side = 0;
     if (newy > 99) side = 2;
     else side = 1;
-    printf("Valid = %d!\n", valid);
+    //printf("Valid = %d!\n", valid);
 
     if (side != playerTeam && valid > 0) {
       valid = playernum;
@@ -789,7 +841,6 @@ dumpMap()
       // Get information about hammer/flag in new cell
       int hammerID = new_location->mjolnir.hammerID;
       int flag = new_location->flag;
-      int hammerIndex = hammerID - 1;
       int flagIndex = flag - 1;
 
       // If there's a hammer at the new location, and the player 
@@ -797,12 +848,30 @@ dumpMap()
       if (hammerID != 0 && p->mjolnir.hammerID == 0)
       {
         // Pick up hammer
+        printf("Player %d is picking up hammer %d\n", playernum, hammerID);
         p->mjolnir.hammerID = hammerID;
         p->mjolnir.uses = new_location->mjolnir.uses;
 
-        // Update hammer location
-        hammers[hammerIndex][0] = newx;
-        hammers[hammerIndex][1] = newy;
+        // Remove hammer from cell
+        maze[newx][newy].mjolnir.hammerID = 0;
+        maze[newx][newy].mjolnir.uses = 0;
+
+      }
+      else if (p->mjolnir.hammerID != 0) // player is currently carrying a hammer
+      {
+        // move hammer with player (update location in hammers array)
+        int p_hammerID = p->mjolnir.hammerID;
+        if (p_hammerID == 1)
+        {
+          // update hammer 1's location
+          hammers[0][0] = newx;
+          hammers[0][1] = newy;
+        }
+        else
+        {
+          hammers[1][0] = newx;
+          hammers[1][1] = newy;
+        } 
       }
 
       // If there's a flag at the new location and the player
@@ -812,9 +881,23 @@ dumpMap()
         // Pick up flag
         p->flag = flag;
 
-        // Update flag location
-        flags[flagIndex][0] = newx;
-        flags[flagIndex][1] = newy;
+        // Remove flag from cell
+        maze[newx][newy].flag = 0;
+      }
+      else if (p->flag != 0) // player is carrying a flag
+      {
+        // update flag location in flags array
+        if (p->flag == 1)
+        {
+          flags[0][0] = newx;
+          flags[0][1] = newy;
+        }
+        else
+        {
+          flags[1][0] = newx;
+          flags[1][1] = newy;
+        }
+
       }
 
 
@@ -857,6 +940,28 @@ dumpMap()
     {
       otherteam = 1;
     }
+
+    // Drop hammer and/or flag if they're carrying them
+    if (p->mjolnir.hammerID != 0)
+    {
+      // Add hammer to current player location (before tag)
+      maze[p->location.x][p->location.y].mjolnir.hammerID = p->mjolnir.hammerID;
+      maze[p->location.x][p->location.y].mjolnir.uses = p->mjolnir.uses;
+
+      // Make player drop hammer
+      p->mjolnir.hammerID = 0;
+      p->mjolnir.uses = 0;
+    }
+
+    if (p->flag != 0)
+    {
+      // Add flag to current player location (before tag)
+      maze[p->location.x][p->location.y].flag = p->flag;;
+
+      // Make player drop flag
+      p->flag = 0;
+    }
+
     p->jail = otherteam; // Other team's jail
     int playerTeam = p->team;
     Point *curr_location = &(p->location);
@@ -907,12 +1012,17 @@ dumpMap()
     else if (playernum == 6)
     {
       location.x = 99;
-      location.y = 19;
+      location.y = 18;
     }
     else if (playernum == 10)
     {
       location.x = 99;
-      location.y = 30;
+      location.y = 19;
+    }
+    else if (playernum == 12)
+    {
+      location.x = 99;
+      location.y = 20;
     }
     else
     {

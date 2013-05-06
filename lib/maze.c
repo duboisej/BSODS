@@ -11,7 +11,25 @@
 
 // Functions here
 int
-  main(int argc, char **argv)
-  { 
-    printf("Poop on a stick.\n");
-  }
+isJail1Cell(int x, int y)
+{
+  return ((x > 89 && x < 109) && (y > 89 && y < 98));
+}
+
+int
+isJail2Cell(int x, int y)
+{
+  return ((x > 89 && x < 109) && (y > 101 && y < 110));
+}
+
+int 
+isHome1Cell(int x, int y)
+{
+  return ((x > 89 && x < 109) && (y > 1 && y < 12));
+}
+
+int
+isHome2Cell(int x, int y)
+{
+  return ((x > 89 && x < 109) && (y > 187 && y < 198));
+}

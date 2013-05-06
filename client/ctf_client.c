@@ -446,6 +446,8 @@ updateMap(Proto_Session *s)
   // Load players
 
   Player tempPlayers[numPlayers+1];
+  int tempHammers[2][2];
+  int tempFlags[2][2];
 
   int m;
   for (m = 1; m < numPlayers+1; m++)
@@ -463,7 +465,7 @@ updateMap(Proto_Session *s)
   // Load flag locations
   if (offset != -1)
   {
-    offset = proto_session_body_unmarshall_int(s, offset, &(flags[0][0]));
+    offset = proto_session_body_unmarshall_int(s, offset, &(tempFlags[0][0]));
   }
   else
   {
@@ -472,7 +474,7 @@ updateMap(Proto_Session *s)
 
   if (offset != -1)
   {
-    offset = proto_session_body_unmarshall_int(s, offset, &(flags[0][1]));
+    offset = proto_session_body_unmarshall_int(s, offset, &(tempFlags[0][1]));
   }
   else
   {
@@ -481,7 +483,7 @@ updateMap(Proto_Session *s)
 
   if (offset != -1)
   {
-    offset = proto_session_body_unmarshall_int(s, offset, &(flags[1][0]));
+    offset = proto_session_body_unmarshall_int(s, offset, &(tempFlags[1][0]));
   }
   else
   {
@@ -490,7 +492,7 @@ updateMap(Proto_Session *s)
 
   if (offset != -1)
   {
-    offset = proto_session_body_unmarshall_int(s, offset, &(flags[1][1]));
+    offset = proto_session_body_unmarshall_int(s, offset, &(tempFlags[1][1]));
   }
   else
   {
@@ -500,7 +502,7 @@ updateMap(Proto_Session *s)
   // Load hammer locations
    if (offset != -1)
   {
-    offset = proto_session_body_unmarshall_int(s, offset, &(hammers[0][0]));
+    offset = proto_session_body_unmarshall_int(s, offset, &(tempHammers[0][0]));
   }
   else
   {
@@ -509,7 +511,7 @@ updateMap(Proto_Session *s)
 
   if (offset != -1)
   {
-    offset = proto_session_body_unmarshall_int(s, offset, &(hammers[0][1]));
+    offset = proto_session_body_unmarshall_int(s, offset, &(tempHammers[0][1]));
   }
   else
   {
@@ -518,7 +520,7 @@ updateMap(Proto_Session *s)
 
   if (offset != -1)
   {
-    offset = proto_session_body_unmarshall_int(s, offset, &(hammers[1][0]));
+    offset = proto_session_body_unmarshall_int(s, offset, &(tempHammers[1][0]));
   }
   else
   {
@@ -527,12 +529,43 @@ updateMap(Proto_Session *s)
 
   if (offset != -1)
   {
-    offset = proto_session_body_unmarshall_int(s, offset, &(hammers[1][1]));
+    offset = proto_session_body_unmarshall_int(s, offset, &(tempHammers[1][1]));
   }
   else
   {
     return -1;
   }
+
+  // Check if flags have moved. If so, update maze.
+  int p;
+  int q;
+  for (p = 0; p < 2; p++)
+  {
+    for (q = 0; q < 2; q++)
+    {
+      if (flags[p][q] != tempFlags[p][q])
+      {
+        maze[(flags[p][0])][(flags[p][1])].flag = 0; // remove flag from old location on map
+        flags[p][q] = tempFlags[p][q]; // copy over new location 
+      }
+    }
+  }
+
+  // Check if hammers have moved. If so, update maze. 
+  p = 0;
+  q = 0;
+  for (p = 0; p < 2; p++)
+  {
+    for (q = 0; q < 2; q++)
+    {
+      if (hammers[p][q] != tempHammers[p][q])
+      {
+        maze[(hammers[p][0])][(hammers[p][1])].mjolnir.hammerID = 0; // remove hammer from old location on map
+        hammers[p][q] = tempHammers[p][q]; // copy over new location 
+      }
+    }
+  }
+
 
   // Dump temp player information
     printf("Printing Temp Player information:\n");
@@ -633,24 +666,40 @@ updateMap(Proto_Session *s)
     else if (c == '#')
     {
       cell->type = CELL_TYPE_WALL;
+      if (i == 100 & j == 17)
+      {
+        printf("found wall at 100, 17 in updateMap\n");
+      }
     }
     else if (c == 'M')
     {
       cell->mjolnir.hammerID = 2;
+      findMapCell(cell, i, j);
     }
     else if (c == 'm')
     {
       cell->mjolnir.hammerID = 1;
+      findMapCell(cell, i, j);
     }
     else if (c == 'F')
     {
-      //printf("found flag 1 location on client\n");
+      //printf("found flag 2 location on client\n");
       cell->flag = 2;
+      findMapCell(cell, i, j);
     }
     else if (c == 'f')
     {
-      //printf("found flag 2 location on client\n");
+      //printf("found flag 1 location on client\n");
       cell->flag = 1;
+      findMapCell(cell, i, j);
+    }
+    else if (c == ' ')
+    {
+      if (i == 100 & j == 17)
+      {
+        printf("found floor at 100, 17 in updateMap\n");
+      }
+      cell->type = CELL_TYPE_FLOOR;
     }
 
     if (j++ == 200)
@@ -666,6 +715,31 @@ updateMap(Proto_Session *s)
   dumpHammerLocations();
   dumpMap();
   return 1;
+}
+
+int
+findMapCell(Cell *cell, int i, int j)
+{
+  if (isHome1Cell(i, j))
+      {
+        cell->type = CELL_TYPE_HOME1;
+      }
+      else if (isHome2Cell(i, j))
+      {
+        cell->type = CELL_TYPE_HOME2;
+      }
+      else if (isJail1Cell(i, j))
+      {
+        cell->type = CELL_TYPE_JAIL1;
+      }
+      else if (isJail2Cell(i, j))
+      {
+        cell->type = CELL_TYPE_JAIL2;
+      }
+      else
+      {
+        cell->type = CELL_TYPE_FLOOR;
+      }
 }
 
 int
@@ -735,7 +809,11 @@ dumpMap()
               || celltype == CELL_TYPE_JAIL1 || celltype == CELL_TYPE_JAIL2 
               || celltype == CELL_TYPE_FLOOR)
             {
-              if (c.mjolnir.hammerID == 2)
+              if (c.playernum != 0)
+              {
+                printf("%d", c.playernum);
+              }
+              else if (c.mjolnir.hammerID == 2)
               {
                 printf("M");
               }

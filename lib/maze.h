@@ -1,7 +1,18 @@
 // maze.h
 // enums and typedefs for the maze
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <poll.h>
+#include "../lib/types.h"
+#include "../lib/protocol_server.h"
+#include "../lib/protocol_utils.h"
 
+int isJail1Cell(int x, int y);
+int isJail2Cell(int x, int y);
+int isHome1Cell(int x, int y);
+int isHome2Cell(int x, int y);
 
 typedef enum  {
 
