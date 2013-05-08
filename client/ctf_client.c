@@ -328,7 +328,7 @@ static int
 updateMap(Proto_Session *s)
 {
   int rc;
-  printf("Got into updateMap.\n");
+  //printf("Got into updateMap.\n");
   //proto_session_dump(s);
   int offset = 0;
 
@@ -610,9 +610,9 @@ updateMap(Proto_Session *s)
   }
   
   // functions for dumping data structure information below:
-  // dumpPlayers();
-  // dumpFlagLocations();
-  // dumpHammerLocations();
+  dumpPlayers();
+  dumpFlagLocations();
+  dumpHammerLocations();
   dumpMap(); // dump map to standard output as ASCII
   return rc;
 }
@@ -818,7 +818,6 @@ dumpPlayers()
 {
     // Dump Player information
     printf("Printing Player information:\n");
-    printf("There are %d current players.\n", numPlayers);
     int a;
     for (a = 1; a < numPlayers+1; a++)
     {

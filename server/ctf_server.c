@@ -102,7 +102,6 @@ dumpPlayers()
 {
     // Dump Player information
     printf("Printing Player information:\n");
-    printf("There are %d current players.\n"), numPlayers;
     int a;
     for (a = 1; a < numPlayers+1; a++)
     {
@@ -481,7 +480,7 @@ dumpMap()
           return -1;
         } else {
           // player tags player from other team
-          printf("Player %d is trying to tag player #%d!\n", playernum, otherPlayer);
+          printf("Player %d is trying to tag player %d.\n", playernum, otherPlayer);
           return otherPlayer;
         } 
       }
@@ -736,6 +735,7 @@ dumpMap()
       // If player is there, tag them first
       if (valid > 0 && move != 'f')
       {
+        printf("tagging other player\n");
         tagPlayer(valid);
       }
       if (valid != playernum)
@@ -905,6 +905,7 @@ dumpMap()
   int
   tagPlayer(int num)
   {
+    printf("Player is being tagged\n");
     Player *p = &(players[num]);
     int otherteam;
     if (num % 2 == 1)
@@ -974,40 +975,45 @@ dumpMap()
     // The code below was used to test various functionality and assign certain players to 
     // specific locations.
 
-    // if (playernum == 1) // test tagging 
-    // {
-    //   location.x = 99;
-    //   location.y = 16;
-    // }
-    // else if (playernum == 2) // test tagging - spawn player 2 on wrong side of the board 
-    // {
-    //   location.x = 99;
-    //   location.y = 17;
-    // }
-    // else if (playernum == 4)
-    // {
-    //   location.x = 99;
-    //   location.y = 89;
-    // }
-    // else if (playernum == 6)
-    // {
-    //   location.x = 99;
-    //   location.y = 18;
-    // }
-    // else if (playernum == 10)
-    // {
-    //   location.x = 99;
-    //   location.y = 19;
-    // }
-    // else if (playernum == 12)
-    // {
-    //   location.x = 99;
-    //   location.y = 20;
-    // }
-    // else
-    // {
-    location = getSpawnLocation(nextTeam); // get a random spawn location for a player 
-    //}
+    if (playernum == 1) // test tagging 
+    {
+      location.x = 99;
+      location.y = 16;
+    }
+    else if (playernum == 2) // test tagging - spawn player 2 on wrong side of the board 
+    {
+      location.x = 99;
+      location.y = 19;
+    }
+    else if (playernum == 4)
+    {
+      location.x = 99;
+      location.y = 13;
+    }
+    else if (playernum == 6)
+    {
+      location.x = 99;
+      location.y = 85;
+    }
+    else if (playernum == 10)
+    {
+      location.x = 99;
+      location.y = 145;
+    }
+    else if (playernum == 5)
+    {
+      location.x = 99;
+      location.y = 156;
+    }
+    else if (playernum == 7)
+    {
+      location.x = 99;
+      location.y = 30;
+    }
+    else
+    {
+      location = getSpawnLocation(nextTeam); // get a random spawn location for a player 
+    }
 
     players[playernum].location = location;  
     players[playernum].flag = 0;
@@ -1039,7 +1045,7 @@ dumpMap()
     {
       nextTeam = 1;
     }
-    //dumpPlayers();
+    dumpPlayers();
     updateEvent();
     return rc;
   }
@@ -1050,20 +1056,20 @@ dumpMap()
     // initialize game board
     load();
     // Initialize flag locations
-    Point p1 = spawnFlag(1); // get location for flag 1
-    maze[p1.x][p1.y].flag = 1;
-    //srand(time(NULL));
-    Point p2 = spawnFlag(2); // get location for flag 2
-    maze[p2.x][p2.y].flag = 2;
+    // Point p1 = spawnFlag(1); // get location for flag 1
+    // maze[p1.x][p1.y].flag = 1;
+    // //srand(time(NULL));
+    // Point p2 = spawnFlag(2); // get location for flag 2
+    // maze[p2.x][p2.y].flag = 2;
 
     // For testing flag functionality below;
 
-    // maze[99][18].flag = 1;
-    // maze[99][19].flag = 2;
-    // flags[0][0] = 99;
-    // flags[0][1] = 18;
-    // flags[1][0] = 99;
-    // flags[1][1] = 19;
+    maze[99][18].flag = 1;
+    maze[99][86].flag = 2;
+    flags[0][0] = 99;
+    flags[0][1] = 18;
+    flags[1][0] = 99;
+    flags[1][1] = 86;
 
     // flags[0][0] = 60;
     // flags[0][1] = 60;

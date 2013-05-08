@@ -1,3 +1,6 @@
+# one_client.sh - when called, runs an applescript that creates a new terminal tab and runs
+# a new instance of the game client. Passes command line argument of port number into connect.sh
+
 #!/bin/sh
 
 pwd=`pwd`
