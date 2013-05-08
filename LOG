@@ -214,3 +214,18 @@ Decisions:
 1) When we reach the point for keydown events, use the **kbhit** C file.
 2) Attempting to validate every move from the server's perspective rather than have client checks.
 3) 4 hammers in the map.
+
+Tuesday May 8 8:32 PM
+Attendees: Ethan DuBois, Eddie Rivas, Niko Konstantakos
+Questions:
+1) Why is UI not linking properly?
+2) Are the win conditions functioning properly?
+
+Decisions:
+1) We decided to move forward without the GUI. It was causing linking/reference problems.
+2) The fact that a player who tags another player with a flag picking up the flag seems like a positive result.
+
+Notes:
+1) Flag dropdown works perfectly.
+2) The win conditions work fine.
+3) 100 clients connected without crashing.
