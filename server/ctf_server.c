@@ -13,36 +13,29 @@
   #define HAMMER2X 95
   #define HAMMER2Y 190
 
-  Cell maze[201][201];
+  Cell maze[201][201]; // encode maze cells, with cell type and/or player number
 
-  Player players[300];
+  Player players[300]; // keep track of all players via Player structs
 
-  int hammers[2][2];
-  int flags[2][2];
+  int hammers[2][2]; // hammer locations
 
-  int nextPlayerIndex = 0;
-  int numPlayers;
-  int nextTeam = 1;
+  int flags[2][2]; // flag locations
 
-  int numfloor;
-  int numhome1;
-  int numhome2;
-  int numwall;
-  int numjail1;
-  int numjail2;
+  int nextPlayerIndex = 0; // keep track of next index to assign a new player
+  int numPlayers = 0; // number of players (global)
+  int nextTeam = 1; // keep track of next team to assign a player to (alternating)
 
   FILE *map;
+
+  int globalwin = 0; // keep track of if there's a win
 
   int
   load()
   {
 
-   printf("Got past variables.\n");
    int c;
 
    map = fopen ("../server/daGame.map", "r");  
-
-   printf("Opened file.\n");
 
    int i;
    int j;
@@ -58,37 +51,30 @@
             {
                 
                 maze[i][j].type = CELL_TYPE_UNBREAKABLE_WALL;
-                numwall++;
             }
             else if (c == ' ')
             {
                 maze[i][j].type = CELL_TYPE_FLOOR;
-                numfloor++;
             }
             else if (c == 'J')
             {
                 maze[i][j].type = CELL_TYPE_JAIL2;
-                numjail1++;
             }
             else if (c == 'j')
             {
                 maze[i][j].type = CELL_TYPE_JAIL1;
-                numjail2++;
             }
             else if (c == 'H') 
             {
                 maze[i][j].type = CELL_TYPE_HOME2;
-                numhome1++;
             }
             else if (c == 'h')
             {
                 maze[i][j].type = CELL_TYPE_HOME1;
-                numhome2++;
             }
             else if (c == '#')
             {
                 maze[i][j].type = CELL_TYPE_WALL;
-                numwall++;
             }
       } 
     }
@@ -174,11 +160,11 @@ dumpMap()
               }
               else if (c.flag == 2)
               {
-                printf("f");
+                printf("F");
               }
               else if (c.flag == 1)
               {
-                printf("F");
+                printf("f");
               }
               else if (celltype == CELL_TYPE_HOME2)
               {
@@ -255,26 +241,25 @@ dumpMap()
   int 
   updateEvent(void)
   {
-    printf("updateEvent called.\n");
     Proto_Session *s;
     Proto_Msg_Hdr hdr;
 
     s = proto_server_event_session();
 
-    printf("Printing connected players for update\n");
-
     hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
     proto_session_hdr_marshall(s, &hdr);
 
+    // Marshall win integer
+
+    proto_session_body_marshall_int(s, globalwin);
+
     // Marshall player information
 
-    printf("Marshalling number of players\n");
-    printf("Number of players is currently %d\n", numPlayers);
     // Send over number of players
 
     proto_session_body_marshall_int(s, numPlayers);
 
-    printf("Marshalling players\n");
+
     // Marshall Player info
     int k;
     for (k = 1; k < numPlayers+1; k++)
@@ -284,14 +269,14 @@ dumpMap()
     }
 
     // Marshall Flag info
-    printf("Marshalling flag locations\n");
+    //printf("Marshalling flag locations\n");
     proto_session_body_marshall_int(s, flags[0][0]);
     proto_session_body_marshall_int(s, flags[0][1]);
     proto_session_body_marshall_int(s, flags[1][0]);
     proto_session_body_marshall_int(s, flags[1][1]);
 
     // Marshall Hammers
-    printf("Marshalling hammer locations\n");
+    //printf("Marshalling hammer locations\n");
     proto_session_body_marshall_int(s, hammers[0][0]);
     proto_session_body_marshall_int(s, hammers[0][1]);
     proto_session_body_marshall_int(s, hammers[1][0]);
@@ -310,11 +295,6 @@ dumpMap()
             Cell c = maze[i][j];
             Cell_Types celltype = c.type;
 
-            // if (i == 100 && j == 17)
-            // {
-            //   printf("Cell type at location (%d, %d) is: %d\n", i, j, celltype);
-            // }
-
             if (c.mjolnir.hammerID == 1)
             {
               proto_session_body_marshall_char(s, 'm');
@@ -325,55 +305,38 @@ dumpMap()
             }
             else if (c.flag == 1)
             {
-              printf("found flag 1 in updateEvent\n");
               proto_session_body_marshall_char(s, 'f');
             }
             else if (c.flag == 2)
             {
-              printf("found flag 2 in updateEvent\n");
               proto_session_body_marshall_char(s, 'F');
             }
             else if (celltype == CELL_TYPE_HOME2)
             {
                 proto_session_body_marshall_char(s, 'H');
-                //printf("H");
             }
             else if (celltype == CELL_TYPE_HOME1)
             {
                 proto_session_body_marshall_char(s, 'h');
-                //printf("h");
             }
             else if (celltype == CELL_TYPE_JAIL2)
             {
                 proto_session_body_marshall_char(s, 'J');
-                //printf("J");
             }
             else if (celltype == CELL_TYPE_JAIL1)
             {
                 proto_session_body_marshall_char(s, 'j');
-                //printf("j");
             } 
             else if (celltype == CELL_TYPE_FLOOR)
             {
-              // if (i == 100 && j == 17)
-              //   {
-              //     printf("Found floor at 100, 17\n");
-              //   }
                 proto_session_body_marshall_char(s, ' ');
             }
             else if (celltype == CELL_TYPE_WALL)
             {
-                // if (i == 100 && j == 17)
-                // {
-                //   printf("Found wall at 100, 17\n");
-                // }
                 proto_session_body_marshall_char(s, '#');
-                //printf("#");
             }
             else if (celltype == CELL_TYPE_UNBREAKABLE_WALL)
             {
-              //if (i == 0) printf("Got left side unbreakable wall\n");
-                //printf("marshalled unbreakable cell\n");
                 proto_session_body_marshall_char(s, '$');
             }
             
@@ -383,44 +346,9 @@ dumpMap()
     }
     proto_session_body_marshall_char(s, 'z'); // marks end of maze
 
-    proto_session_dump(s);
     proto_server_post_event(); 
-    //dumpMap(); 
-    dumpPlayers();
+    //dumpPlayers();
   }
-
-  // int 
-  // moveEvent(int x, int y, int playernum)
-  // {
-  //   printf("moveEvent called.\n");
-  //   Proto_Session *s;
-  //   Proto_Msg_Hdr hdr;
-
-  //   s = proto_server_event_session();
-  //   hdr.type = PROTO_MT_EVENT_BASE_MOVE;
-  //   proto_session_hdr_marshall(s, &hdr);
-  //   proto_session_body_marshall_int(s, x);
-  //   proto_session_body_marshall_int(s, y);
-  //   proto_session_body_marshall_int(s, playernum);
-  //   proto_session_dump(s);
-  //   proto_server_post_event();  
-  // }
-
-  // int 
-  // breakWallEvent(int x, int y)
-  // {
-  //   printf("breakWallEvent called.\n");
-  //   Proto_Session *s;
-  //   Proto_Msg_Hdr hdr;
-
-  //   s = proto_server_event_session();
-  //   hdr.type = PROTO_MT_EVENT_BASE_MOVE;
-  //   proto_session_hdr_marshall(s, &hdr);
-  //   proto_session_body_marshall_int(s, x);
-  //   proto_session_body_marshall_int(s, y);
-  //   proto_session_dump(s);
-  //   proto_server_post_event();  
-  // }
 
   char MenuString[] =
     "d/D-debug on/off u-update clients q-quit";
@@ -500,7 +428,7 @@ dumpMap()
     another player at the new location, returns that player's number. If a valid move,
     to an empty floor/home/jail cell, returns 0 */
   int
-  checkMove(int playernum, Cell *new_location)
+  checkMove(int playernum, Cell *new_location, int oldx, int oldy)
   {
     Cell_Types newType = new_location->type;
     // Check cell type
@@ -533,7 +461,8 @@ dumpMap()
         return -1;
       }
     }
-    else if (newType == CELL_TYPE_FLOOR && players[playernum].jail != 0)
+    else if ((isJail1Cell(oldx, oldy) && players[playernum].jail == 1) || 
+      (isJail2Cell(oldx, oldy) && players[playernum].jail == 1))
     {
       // player is in jail and is trying to move out of jail
       return -1;
@@ -568,7 +497,6 @@ dumpMap()
   int 
   getLocationInRange(int min, int max)
   {
-    //srand(time(NULL));
     int x = min + (rand() % (max - min));
     return x;
   }
@@ -630,6 +558,7 @@ dumpMap()
     return p;
   }
 
+  /* spawnFlag - returns a Point (location) where a flag has been randomly spawned */
   Point 
   spawnFlag(int team)
   {
@@ -665,33 +594,7 @@ dumpMap()
 
   }
 
-
-  // int
-  // tagPlayer(int playernum)
-  // {
-  //   //printf("issues1");
-  //   Player *p = &(players[playernum]);
-  //   //printf("issues2");
-  //   int playerTeam = p->team;
-  //   //printf("issues3");
-  //   Point *curr_location = &(p->location);
-  //   int x = curr_location->x;
-  //   int y = curr_location->y;
-  //   Cell *old_location = &(maze[x][y]);
-  //   Point jailLocation = jailSpawn(playernum);
-  //   Cell *new_location = &(maze[jailLocation.x][jailLocation.y]);
-
-  //   // Update player location
-  //   curr_location->x = jailLocation.x;
-  //   curr_location->y = jailLocation.y;
-
-  //   // Remove player from old location in maze
-  //   old_location->playernum = 0;
-
-  //   // Add player to new location in maze
-  //   new_location->playernum = playernum;
-  //   return 1;
-  // }
+  // freePlayers - frees all players that are in a given jail 
 
   int
   freePlayers(int jail)
@@ -702,42 +605,73 @@ dumpMap()
       Player *p = &(players[i]);
       if (p->jail == jail)
       {
-        //printf("Freeing player %d\n", i);
         p->jail = 0;
-        printf("Set jail to 0\n");
         Point old_location = p->location;
-        printf("Grabbed old(current) location\n");
         maze[old_location.x][old_location.y].playernum = 0; // remove player from jail cell
-        printf("Removed player from jail cell\n");
         Point location = getSpawnLocation(p->team);
-        printf("Got new spawn location");
         p->location = location;  
-        printf("Set new location\n");
 
         // Add player number to new cell
         int x = location.x;
-        printf("Grabbed x value from new location\n");
         int y = location.y;
-        //printf("Transporting player %d back to his home at location (%d, %d)\n", i, x, y);
         Cell *c = &(maze[x][y]);
         c->playernum = i;
       }
     }
   }
 
+  // dropFlag - takes a Player struct pointer, a Session pointer, and a Message header. 
+  // drops a flag if the player has one. Otherwise sends back a reply with an invalid move character.
+  int
+  dropFlag(Player *p, Proto_Session *s, Proto_Msg_Hdr h)
+  {
+    int rc;
+    int valid;
+    Point location = p->location;
+    if (p->flag != 0 && maze[location.x][location.y].flag == 0)
+    {
+      // drop flag
+      valid = 1;
+      maze[location.x][location.y].flag = p->flag;
+      p->flag = 0;
+    }
+    else
+    {
+      valid = 0;
+    }
+
+    // send reply
+    bzero(&h, sizeof(s));
+    h.type = PROTO_MT_REP_BASE_MOVE;
+    proto_session_hdr_marshall(s, &h);
+    if (valid)
+    {
+      proto_session_body_marshall_char(s, 'V'); // 'V' indicates valid move
+    }
+    else
+    {
+      proto_session_body_marshall_char(s, 'I'); // 'I' in body indicates invalid move
+    }
+    rc=proto_session_send_msg(s,1);
+    updateEvent();
+    return rc;
+  }
+
+  // playerMove - main game logic is encoded here. Takes a give move, validates it and performs
+  // any and all necessary actions to continue consistent gameplay. Calls checkMove(), tagPlayer(), 
+  // freePlayers() and other helper functions.
+
   int playerMove(Proto_Session *s)
   {
-    int rc; 
+    int rc;
     int fd;
     int player;
     Proto_Msg_Hdr h;
     char move = s->rbuf[0];
     int playernum;
     proto_session_body_unmarshall_int(s, 1, &playernum);
-    printf("Player %d is moving\n", playernum);
     Player *p = &(players[playernum]);
     int playerTeam = p->team;
-    printf("Player %d is on team %d\n", playernum, playerTeam);
     Point *curr_location = &(p->location);
     int x = curr_location->x;
     int y = curr_location->y;
@@ -765,48 +699,48 @@ dumpMap()
       newx = x;
       newy = y+1;
     }
+    else if (move == 'f')
+    {
+      rc = dropFlag(p, s, h);
+      return rc;
+    }
     else
     {
       return -1;
     }
+
+
     new_location = &(maze[newx][newy]);
-    printf("checking move to location (%d, %d)...\n", newx, newy);
-    int valid = checkMove(playernum, new_location); 
+    int valid = checkMove(playernum, new_location, x, y); 
 
     if (valid == 301 || valid == 302)
     {
       // Player is breaking a wall with Hammer 1
-      printf("player %d is breaking a wall\n", playernum);
       valid = 0;
-      printf("Setting cell at location (%d, %d) to be type floor\n", newx, newy);
       maze[newx][newy].type = CELL_TYPE_FLOOR;
       players[playernum].mjolnir.uses--;
     }
 
-    //printf("Valid = %d!\n", valid);
+
+    // Compute which side the player is on
     int side = 0;
     if (newy > 99) side = 2;
     else side = 1;
-    //printf("Valid = %d!\n", valid);
 
     if (side != playerTeam && valid > 0) {
-      valid = playernum;
+      valid = playernum; // player tagged himself because he was on the wrong side.
     }
     
-    // || playerTeam != valid%2
     if (valid != -1)
     {
-      printf("Valid move!\n");
-
       // If player is there, tag them first
-      if (valid > 0)
+      if (valid > 0 && move != 'f')
       {
-        printf("made it into if\n");
-        printf("Valid is %d\n", valid);
         tagPlayer(valid);
       }
-      else
+      if (valid != playernum)
       {
+        // tag other player
         curr_location->x = newx;
         curr_location->y = newy;
 
@@ -818,24 +752,26 @@ dumpMap()
       }
 
       // Check if other team's jail. If so, free players in jail.
-      printf("playerTeam is now %d\n", playerTeam);
-      if (playerTeam == 1)
+      if (playerTeam == 1 && p->jail == 0)
       {
-        printf("Player is from team 1 (jail check)\n");
         if (new_location->type == CELL_TYPE_JAIL2)
         {
-          printf("Player from team 1 is trying to free his teammates.\n");
           freePlayers(2);
         }
       }
-      else
+      else if (p->jail == 0)
       {
-        printf("Player is from team 2 (jail check)\n");
         if (new_location->type == CELL_TYPE_JAIL1)
         {
-          printf("Player from team 2 is trying to free his teammates.\n");
           freePlayers(1);
         }
+      }
+
+      // Drop flag here
+      if (move == 'f')
+      {
+        maze[x][y].flag = p->flag;
+        p->flag = 0;
       }
 
       // Get information about hammer/flag in new cell
@@ -848,7 +784,6 @@ dumpMap()
       if (hammerID != 0 && p->mjolnir.hammerID == 0)
       {
         // Pick up hammer
-        printf("Player %d is picking up hammer %d\n", playernum, hammerID);
         p->mjolnir.hammerID = hammerID;
         p->mjolnir.uses = new_location->mjolnir.uses;
 
@@ -900,12 +835,29 @@ dumpMap()
 
       }
 
+      int win = checkWin();
+
 
       // send good reply
       bzero(&h, sizeof(s));
       h.type = PROTO_MT_REP_BASE_MOVE;
       proto_session_hdr_marshall(s, &h);
-      proto_session_body_marshall_char(s, 'V'); // 'V' indicates valid move
+      if (win == 0)
+      {
+        proto_session_body_marshall_char(s, 'V'); // 'V' indicates valid move
+      }
+      else if (win == 1)
+      {
+        proto_session_body_marshall_char(s, 'w'); // 'w' indicates team 1 won
+        globalwin = 1;
+        printf("Team 1 wins!\n");
+      }
+      else
+      {
+        proto_session_body_marshall_char(s, 'W'); // 'W' indicates team 2 won
+        globalwin = 2;
+        printf("Team 2 wins!\n");
+      }
       rc=proto_session_send_msg(s, 1);
     }
     else
@@ -924,12 +876,35 @@ dumpMap()
     return rc;
   }
 
-  
+  // checkWin() - evaluates the game board and checks for win conditions. Note that we did not
+  // include the condition of all players from a team being jailed.
+  int
+  checkWin()
+  {
+    int win;
+    int flag1x = flags[0][0];
+    int flag1y = flags[0][1];
+    int flag2x = flags[1][0];
+    int flag2y = flags[1][1];
+    if (isHome1Cell(flag1x, flag1y) && isHome1Cell(flag2x, flag2y))
+    {
+      win = 1;
+    }
+    else if (isHome2Cell(flag1x, flag1y) && isHome2Cell(flag1x, flag1y))
+    {
+      win = 2;
+    }
+    else
+    {
+      win = 0;
+    }
+  }
+
+  // tagPlayer() - takes a player number and sends that player to the correct jail, changing 
+  // the player state and the game data structure(s).
   int
   tagPlayer(int num)
   {
-    printf("Tagging player %d\n", num);
-    printf("Got into tagplayer\n");
     Player *p = &(players[num]);
     int otherteam;
     if (num % 2 == 1)
@@ -956,7 +931,7 @@ dumpMap()
     if (p->flag != 0)
     {
       // Add flag to current player location (before tag)
-      maze[p->location.x][p->location.y].flag = p->flag;;
+      maze[p->location.x][p->location.y].flag = p->flag;
 
       // Make player drop flag
       p->flag = 0;
@@ -984,51 +959,56 @@ dumpMap()
     return 1;
   }
 
+  // playerHello - RPC called when a player connects to the game server. 
+  // Assigns the player a number and initializes the necessary data structures.
   int playerHello(Proto_Session *s)
   {
-    printf("Player %d connected and said hello\n", nextPlayerIndex+1);
+    printf("Player connected.\n");
     int playernum = nextPlayerIndex + 1;
-    printf("Assigned playernum\n");
 
     // Add player and associated info to player array
     players[playernum].playernum = playernum;
     players[playernum].team = nextTeam;
     Point location;
-    if (playernum == 1) // test tagging - spawn player 1 on wrong side of the board 
-    {
-      location.x = 99;
-      location.y = 16;
-    }
-    else if (playernum == 2) // test tagging - spawn player 1 on wrong side of the board 
-    {
-      location.x = 99;
-      location.y = 17;
-    }
-    else if (playernum == 4)
-    {
-      location.x = 99;
-      location.y = 89;
-    }
-    else if (playernum == 6)
-    {
-      location.x = 99;
-      location.y = 18;
-    }
-    else if (playernum == 10)
-    {
-      location.x = 99;
-      location.y = 19;
-    }
-    else if (playernum == 12)
-    {
-      location.x = 99;
-      location.y = 20;
-    }
-    else
-    {
-      location = getSpawnLocation(nextTeam);
-    }
-    // location = getSpawnLocation(nextTeam);
+
+    // The code below was used to test various functionality and assign certain players to 
+    // specific locations.
+
+    // if (playernum == 1) // test tagging 
+    // {
+    //   location.x = 99;
+    //   location.y = 16;
+    // }
+    // else if (playernum == 2) // test tagging - spawn player 2 on wrong side of the board 
+    // {
+    //   location.x = 99;
+    //   location.y = 17;
+    // }
+    // else if (playernum == 4)
+    // {
+    //   location.x = 99;
+    //   location.y = 89;
+    // }
+    // else if (playernum == 6)
+    // {
+    //   location.x = 99;
+    //   location.y = 18;
+    // }
+    // else if (playernum == 10)
+    // {
+    //   location.x = 99;
+    //   location.y = 19;
+    // }
+    // else if (playernum == 12)
+    // {
+    //   location.x = 99;
+    //   location.y = 20;
+    // }
+    // else
+    // {
+    location = getSpawnLocation(nextTeam); // get a random spawn location for a player 
+    //}
+
     players[playernum].location = location;  
     players[playernum].flag = 0;
     players[playernum].mjolnir.hammerID = 0;
@@ -1039,7 +1019,6 @@ dumpMap()
     int y = location.y;
     Cell *c = &(maze[x][y]);
     c->playernum = playernum;
-    printf("Set player %d at location %d,%d\n", playernum, x, y);
 
     // Send reply back to player with their playernum
     int rc;
@@ -1048,7 +1027,7 @@ dumpMap()
     h.type = PROTO_MT_REP_BASE_HELLO;
     proto_session_hdr_marshall(s, &h);
     proto_session_body_marshall_int(s, playernum);
-    proto_session_dump(s);
+    //proto_session_dump(s);
     rc = proto_session_send_msg(s, 1);
     nextPlayerIndex++;
     numPlayers = playernum;
@@ -1060,7 +1039,7 @@ dumpMap()
     {
       nextTeam = 1;
     }
-    dumpPlayers();
+    //dumpPlayers();
     updateEvent();
     return rc;
   }
@@ -1072,23 +1051,26 @@ dumpMap()
     load();
     // Initialize flag locations
     Point p1 = spawnFlag(1); // get location for flag 1
-    printf("Spawned first flag at location (%d,%d)\n", p1.x, p1.y);
     maze[p1.x][p1.y].flag = 1;
     //srand(time(NULL));
     Point p2 = spawnFlag(2); // get location for flag 2
-    printf("Spawned second flag at location (%d,%d)\n", p2.x, p2.y);
     maze[p2.x][p2.y].flag = 2;
-    flags[0][0] = p1.x;
-    flags[0][1] = p1.y;
-    flags[1][0] = p2.x;
-    flags[1][1] = p2.y;
+
+    // For testing flag functionality below;
+
+    // maze[99][18].flag = 1;
+    // maze[99][19].flag = 2;
+    // flags[0][0] = 99;
+    // flags[0][1] = 18;
+    // flags[1][0] = 99;
+    // flags[1][1] = 19;
 
     // flags[0][0] = 60;
     // flags[0][1] = 60;
     // flags[1][0] = 105;
     // flags[1][1] = 70;
 
-    // Initialize hammer locations
+    // Initialize hammer locations (hardcoded)
     hammers[0][0] = HAMMER1X;
     hammers[0][1] = HAMMER1Y;
     hammers[1][0] = HAMMER2X;
@@ -1120,33 +1102,11 @@ dumpMap()
           c->mjolnir.uses = 0;
         }
 
-        // // encode initial flag information
-        // if (i == flags[0][0] && j == flags[0][1]) // flag 1 start location
-        // {
-        //   printf("found flag 1 location on server\n");
-        //   c->flag = 1;
-        // }
-        // else if (i == flags[1][0] && j == flags[1][1]) // flag 2 start location
-        // {
-        //   printf("found flag 2 location on server\n");
-        //   c->flag = 2;
-        // }
-        // else
-        // {
-        //   c->flag = 0;
-        // }
-
         // set initial player number for each cell to 0        
         c->playernum = 0;
         
       }
     }
-
-
-
-
-    printf("Hammer1X at %x\n", hammers[0][0]);
-    printf("Hammer1Y at %x\n", hammers[0][1]);
 
     if (proto_server_init()<0) {
       fprintf(stderr, "ERROR: failed to initialize proto_server subsystem\n");

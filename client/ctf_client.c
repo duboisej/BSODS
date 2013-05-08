@@ -34,16 +34,14 @@ typedef struct ClientState  {
   Proto_Client_Handle ph;
 } Client;
 
-// represent game board..?
-Cell maze[201][201];
-char board[201][201];
-int xDimension = 200;
-int yDimension = 200;
-Player players[300];
-int numPlayers;
-int hammers[2][2];
-int flags[2][2];
-int nextRPC = 0;
+// represent game board..
+Cell maze[201][201]; // store cell type and playernum if a player is there
+
+Player players[300]; // Player structs to store necessary info about players.
+
+int numPlayers; // global int to store number of players currently connected. Always updated via update from the server.
+int hammers[2][2]; // store hammer locations.
+int flags[2][2]; // store flag locations.
 
 
 int 
@@ -72,13 +70,12 @@ printMenu(void)
 {
   printf("\nYour command options are as follows: \n");
   printf("\n'connect <ip:port>':\n\tconnects you to the server with the corresponding IP address and port number. If you are already connected to a server, the command will do nothing. Example: connect 127.0.0.1:38500\n");
-  printf("\n'numhome<1 or 2>':\n\tqueries the number of home cells for the specified team, 1 or 2.\n");
-  printf("\n'numjail<1 or 2>':\n\tqueries the number of jail cells for the specified team, 1 or 2.\n");
-  printf("\n'numwall':\n\tqueries the number of wall cells in the whole map.\n");
-  printf("\n'numfloor':\n\tqueries the number of floor cells in the whole map.\n");
-  printf("\n'dim':\n\treturns the dimensions of the map.\n");
-  printf("\n'cinfo<x,y>':\n\treturns cell information at the given coordinates, if it is a valid one.\n");
   printf("\n'dump':\n\tprints the map.\n");
+  printf("\n'w':\n\tmoves player up.\n");
+  printf("\n'a':\n\tmoves player left.\n");
+  printf("\n's':\n\tmoves player down.\n");
+  printf("\n'd':\n\tmoves player right.\n");
+  printf("\n'f':\n\tdrops flag (if carrying).\n");
   printf("\n'disconnect':\n\tdisconnects you from the server you are currently connected to. If not connected to a server, the command will do nothing.\n");
   printf("\n'where':\n\tdisplays the <ip:port> of the server you are currently connected to. If not connected to a server, the command will do nothing.\n");
   printf("\n'quit':\n\tquits the Tic-Tac-Toe client. This assumes a disconnection from the server.\n");
@@ -94,7 +91,7 @@ clientInit(Client *C)
   if (proto_client_init(&(C->ph))<0) {
     fprintf(stderr, "client: main: ERROR initializing proto system\n");
     return -1;
-  }
+  } 
   return 1;
 }
 
@@ -167,21 +164,11 @@ doConnect(Client *C) {
 		    if (proto_client_hello(C->ph) > 0)
         {
             s = proto_client_rpc_session(C->ph);
-            proto_session_dump(s);
+            //proto_session_dump(s);
             int temp;
             proto_session_body_unmarshall_int(s, 0, &temp);
-            //printf("Temp = %d\n", temp);
             globals.playernum = temp;
             printf("Connected to %s:%d: You are player number %d", globals.host, globals.port, globals.playernum);
-            // Player *player = &(players[globals.playernum]);
-            // player->playernum = globals.playernum;
-            // player->location.x = 0;
-            // player->location.y = 0;
-            // player->team = playernum%2;
-            // player->flag = 0;
-            // player->mjolnir.hammerID = 0;
-            // player->mjolnir.uses = 0;
-            //dumpPlayers();
         } 
         else
         {
@@ -206,49 +193,6 @@ doWhere(void) {
     return 1;
 }
 
-int
-doFetchInfo(Client* C, char cell)
-{
-  
-  int rc;
-  int *replycode;
-  rc = proto_client_move(C->ph, cell, playernum);
-  // Handle replies
-  Proto_Session *s = proto_client_rpc_session(C->ph);
-  proto_session_body_unmarshall_int(s, 0, replycode);
-  
-  if (cell == 'f') {
-  	printf("There are %d floor cells.\n", *replycode);
-    rc = 1;
-  }
-  else if (cell == 'H')
-  {
-    printf("There are %d home cells for team 2.\n", *replycode);
-    rc = 1;
-  }
-  else if (cell == 'h')
-  {
-    printf("There are %d home cells for team 1.\n", *replycode);
-    rc = 1;
-  }
-  else if (cell == 'J')
-  {
-    printf("There are %d jail cells for team 2.\n", *replycode);
-    rc = 1;
-  }
-  else if (cell == 'j')
-  {
-    printf("There are %d jail cells for team 1.\n", *replycode);
-    rc = 1;
-  }
-  else if (cell == 'w')
-  {
-    printf("There are %d wall cells.\n", *replycode);
-    rc = 1;
-  }
-  return rc;
-
-}
 
 int
 doMove(Client* C, char move)
@@ -259,9 +203,20 @@ doMove(Client* C, char move)
   Proto_Session *s = proto_client_rpc_session(C->ph);
   proto_session_hdr_unmarshall(s, &(s->rhdr));
   char replycode = s->rbuf[0];
+  //printf("got back replycode %c\n", replycode);
   if (replycode == 'I')
   {
     printf("Sorry. Invalid move.\n");
+  }
+  else if (replycode == 'w')
+  {
+    printf("Team 1 won!!!!\n");
+    doDisconnect(C);
+  }
+  else if (replycode == 'W')
+  {
+    printf("Team 2 won!!!!\n");
+    doDisconnect(C);
   }
   return rc;
 
@@ -277,7 +232,7 @@ doDisconnect(Client* C)
   }
 
 	//Close both sockets (fd's)
-  printf("Game Over: You Quit\n");
+  printf("Game Over.\n");
 	Proto_Session* srpc = proto_client_rpc_session(C->ph);
 	Proto_Session* sevent = proto_client_event_session(C->ph);
 	fprintf(stderr, "RPC fd = %d\n", srpc->fd);
@@ -288,13 +243,6 @@ doDisconnect(Client* C)
 	globals.connected = 0;
 	printMenu();
 	return 1;
-}
-
-int
-doGetDimension (Client *C)
-{
-  printf("The dimensions of the board are %d x %d.\n", xDimension, yDimension);
-  return 1;
 }
 
 int 
@@ -308,18 +256,12 @@ docmd(Client *C)
   if (strlen(globals.in.data)==0) return rc; //rc = doReprint();
   else if (strncmp(globals.in.data, "connect", sizeof("connect")-1)==0) rc = doConnect(C);
   else if (strncmp(globals.in.data, "disconnect", sizeof("disconnect")-1)==0) rc = doDisconnect(C);
-  else if (strncmp(globals.in.data, "numhome 1", sizeof("numhome 1")-1)==0) rc = doFetchInfo(C, 'H');
-  else if (strncmp(globals.in.data, "numhome 2", sizeof("numhome 2")-1)==0) rc = doFetchInfo(C, 'h');
-  else if (strncmp(globals.in.data, "numjail 1", sizeof("numjail 1")-1)==0) rc = doFetchInfo(C, 'J');
-  else if (strncmp(globals.in.data, "numjail 2", sizeof("numjail 2")-1)==0) rc = doFetchInfo(C, 'j');
-  else if (strncmp(globals.in.data, "dim", sizeof("dim")-1)==0) rc = doGetDimension(C);
-  else if (strncmp(globals.in.data, "numwall", sizeof("numwall")-1)==0) rc = doFetchInfo(C, 'w');
-  else if (strncmp(globals.in.data, "numfloor", sizeof("numfloor")-1)==0) rc = doFetchInfo(C, 'f');
   else if (strncmp(globals.in.data, "dump", sizeof("dump")-1)==0) rc = doDump(C);
   else if (strncmp(globals.in.data, "w", sizeof("w")-1)==0) rc = doMove(C, 'w');
   else if (strncmp(globals.in.data, "s", sizeof("s")-1)==0) rc = doMove(C, 's');
   else if (strncmp(globals.in.data, "a", sizeof("a")-1)==0) rc = doMove(C, 'a');
   else if (strncmp(globals.in.data, "d", sizeof("d")-1)==0) rc = doMove(C, 'd');
+  else if (strncmp(globals.in.data, "f", sizeof("f")-1)==0) rc = doMove(C, 'f');
   else if (strncmp(globals.in.data, "quit", 
 		   sizeof("quit")-1)==0) rc = doQuit();
   else  printf("Unknown Command\n");
@@ -379,70 +321,35 @@ initGlobals(void)
   globals.connected=0;
 }
 
-// static int
-// updateMap(Proto_Session *s)
-// {
-//   printf("Got into updateMap.\n");
-//   proto_session_dump(s);
 
-//   // Load hammer locations from session
-
-//   int i;
-//   int j;
-//   int offset = 0;
-//   for (i = 0; i < 2; i++)
-//   {
-//     for (j = 0; j < 2; j++)
-//     {
-//       if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &(hammers[i][j]));
-//     }
-//   }
-
-//   if (offset == -1)
-//   {
-//     return -1;
-//   }
-
-//   // Load maze from session
-
-//   int k;
-//   int l;
-//   for (k = 0; k < 201; k++)
-//   {
-//     for (l = 0; l < 201; l++)
-//     {
-//       if (offset != -1) offset = proto_session_body_unmarshall_cell(s, offset, &(maze[i][j]));
-//     }
-//   }
-
-//   // Get number of players (to read in players)
-
-//   int numPlayers;
-//   if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &numPlayers);
-
-//   // Load players
-
-//   int m;
-//   for (m = 0; m < numPlayers; m++)
-//   {
-//     if (offset != -1) offset = proto_session_body_unmarshall_player(s, offset, &(players[m+1]));
-//   }
-//   return 1;
-// }
-
+// updateMap - receives event update from server, parses game information, updates data structures
+// and dumps map to standard output in ASCII form.
 static int
 updateMap(Proto_Session *s)
 {
+  int rc;
   printf("Got into updateMap.\n");
-  proto_session_dump(s);
+  //proto_session_dump(s);
   int offset = 0;
 
+  int win;
+  offset = proto_session_body_unmarshall_int(s, offset, &win);
+  if (win == 1)
+  {
+    printf("Team 1 won.\n");
+    exit(0);
+  }
+  else if (win == 2)
+  {
+    printf("Team 2 won.\n");
+    exit(0);
+  }
 
   // Get number of players (to read in players)
 
   offset = proto_session_body_unmarshall_int(s, offset, &numPlayers);
 
-  printf("There are %d players, read from buffer\n", numPlayers);
+  //printf("There are %d players, read from buffer\n", numPlayers);
   // Load players
 
   Player tempPlayers[numPlayers+1];
@@ -567,29 +474,30 @@ updateMap(Proto_Session *s)
   }
 
 
-  // Dump temp player information
-    printf("Printing Temp Player information:\n");
-    printf("There are %d current players.\n", numPlayers);
-    int b;
-    for (b = 1; b < numPlayers+1; b++)
-    {
-      printf("Player %d:\n", b);
-      Player *p = &(tempPlayers[b]);
-      printf("\tPlayer number is %d\n", p->playernum);
-      printf("\tPlayer is on team number %d\n", p->team);
-      printf("\tLocation: %d,%d\n", p->location.x, p->location.y);
-      Hammer *h = &(p->mjolnir);
-      if (h->hammerID != 0)
-      {
-        printf("\tCarrying Hammer %d with %d uses left.\n", h->hammerID, h->uses);
-      }
-      if (p->flag != 0)
-      {
-        printf("\tCarrying Flag %d\n", p->flag);
-      }
-      printf("\n");
+  // Dump temp player information - for debugging purposes
+
+    // printf("Printing Temp Player information:\n");
+    // printf("There are %d current players.\n", numPlayers);
+    // int b;
+    // for (b = 1; b < numPlayers+1; b++)
+    // {
+    //   printf("Player %d:\n", b);
+    //   Player *p = &(tempPlayers[b]);
+    //   printf("\tPlayer number is %d\n", p->playernum);
+    //   printf("\tPlayer is on team number %d\n", p->team);
+    //   printf("\tLocation: %d,%d\n", p->location.x, p->location.y);
+    //   Hammer *h = &(p->mjolnir);
+    //   if (h->hammerID != 0)
+    //   {
+    //     printf("\tCarrying Hammer %d with %d uses left.\n", h->hammerID, h->uses);
+    //   }
+    //   if (p->flag != 0)
+    //   {
+    //     printf("\tCarrying Flag %d\n", p->flag);
+    //   }
+    //   printf("\n");
       
-    }
+    // }
 
   // Update map representation from player info
   int a;
@@ -611,20 +519,23 @@ updateMap(Proto_Session *s)
       // Player moved. Update all data structures.
       // Update maze
       new_cell->playernum = a;
-      old_cell->playernum = 0;
+      if (old_cell->playernum == a)
+      {
+        old_cell->playernum = 0;
+      }
+
       player->playernum = a;
       player->team = temp_player->team;
       location->x = newx;
       location->y = newy;
-      if (temp_player->mjolnir.hammerID != 0) player->mjolnir.hammerID = temp_player->mjolnir.hammerID;
-      if (temp_player->mjolnir.uses != 0) player->mjolnir.uses = temp_player->mjolnir.uses;
-      if (temp_player->flag != 0) player->flag = temp_player->flag;
+      player->mjolnir.hammerID = temp_player->mjolnir.hammerID;
+      player->mjolnir.uses = temp_player->mjolnir.uses;
+      player->flag = temp_player->flag;
 
     }
 
 
   }
-  //dumpPlayers();
 
   // Load map
 
@@ -644,7 +555,6 @@ updateMap(Proto_Session *s)
     if (c == 'H')
     {
       cell->type = CELL_TYPE_HOME2;
-      //printf("found home cell\n");
     }
     else if (c == 'h')
     {
@@ -660,45 +570,34 @@ updateMap(Proto_Session *s)
     }
     else if (c == '$')
     {
-      //if (i == 0) printf("found an unbreakable left wall\n");
       cell->type = CELL_TYPE_UNBREAKABLE_WALL;
     }
     else if (c == '#')
     {
       cell->type = CELL_TYPE_WALL;
-      if (i == 100 & j == 17)
-      {
-        printf("found wall at 100, 17 in updateMap\n");
-      }
     }
     else if (c == 'M')
     {
       cell->mjolnir.hammerID = 2;
-      findMapCell(cell, i, j);
+      rc = findMapCell(cell, i, j);
     }
     else if (c == 'm')
     {
       cell->mjolnir.hammerID = 1;
-      findMapCell(cell, i, j);
+      rc = findMapCell(cell, i, j);
     }
     else if (c == 'F')
     {
-      //printf("found flag 2 location on client\n");
       cell->flag = 2;
-      findMapCell(cell, i, j);
+      rc = findMapCell(cell, i, j);
     }
     else if (c == 'f')
     {
-      //printf("found flag 1 location on client\n");
       cell->flag = 1;
-      findMapCell(cell, i, j);
+      rc = findMapCell(cell, i, j);
     }
     else if (c == ' ')
     {
-      if (i == 100 & j == 17)
-      {
-        printf("found floor at 100, 17 in updateMap\n");
-      }
       cell->type = CELL_TYPE_FLOOR;
     }
 
@@ -710,84 +609,65 @@ updateMap(Proto_Session *s)
     
   }
   
-  dumpPlayers();
-  dumpFlagLocations();
-  dumpHammerLocations();
-  dumpMap();
-  return 1;
+  // functions for dumping data structure information below:
+  // dumpPlayers();
+  // dumpFlagLocations();
+  // dumpHammerLocations();
+  dumpMap(); // dump map to standard output as ASCII
+  return rc;
 }
 
+// resets a map celltype based on location.
 int
 findMapCell(Cell *cell, int i, int j)
 {
+  int rc;
   if (isHome1Cell(i, j))
-      {
-        cell->type = CELL_TYPE_HOME1;
-      }
-      else if (isHome2Cell(i, j))
-      {
-        cell->type = CELL_TYPE_HOME2;
-      }
-      else if (isJail1Cell(i, j))
-      {
-        cell->type = CELL_TYPE_JAIL1;
-      }
-      else if (isJail2Cell(i, j))
-      {
-        cell->type = CELL_TYPE_JAIL2;
-      }
-      else
-      {
-        cell->type = CELL_TYPE_FLOOR;
-      }
+  {
+    cell->type = CELL_TYPE_HOME1;
+    rc = 1;
+  }
+  else if (isHome2Cell(i, j))
+  {
+    cell->type = CELL_TYPE_HOME2;
+    rc = 1;
+  }
+  else if (isJail1Cell(i, j))
+  {
+    cell->type = CELL_TYPE_JAIL1;
+    rc = 1;
+  }
+  else if (isJail2Cell(i, j))
+  {
+    cell->type = CELL_TYPE_JAIL2;
+    rc = 1;
+  }
+  else
+  {
+    cell->type = CELL_TYPE_FLOOR;
+    rc = 1;
+  }
+  return rc;
 }
 
+// can be used to manually dump the map to standard out in ASCII format.
 int
 doDump(Client *C)
 {
-  int i;
-  int j;
-  for (i = 0; i < 201; i++)
+  if (globals.connected)
   {
-    for (j = 0; j < 201; j++)
-    {
-      printf("%c", maze[i][j]);
-    }
+    dumpMap();
   }
-
-  printf("Cell at 100, 2:");
-  doCInfo(C, 100, 2);
+  else
+  {
+    printf("You aren't connected to the game server, and can't dump the map.\n");
+  }
 
   return 1;
 }
 
-int
-doCInfo(Client *C, int x, int y)
-{
-  char c = board[x][y];
-  int team;
 
-  if (y <= 100) team = 1; 
-  else team = 2;
-
-  if (c == ' ')
-  {
-    printf("Cell at (%d, %d) is an unoccupied floor cell on team %d\n", x, y, team);
-  }
-  else if (c == 'J' || c == 'j')
-  {
-      printf("Cell at (%d, %d) is an unoccupied jail cell on team %d\n", x, y, team);
-  }
-  else if (c == 'H' || c == 'h')
-  {
-      printf("Cell at (%d, %d) is an unoccupied home cell on team %d\n", x, y, team);
-  }
-  else if (c == '#')
-  {
-      printf("Cell at (%d, %d) is a wall cell on team %d\n", x, y, team);
-  }
-}
-
+// dumps map to standard out as ASCII
 int
 dumpMap()
 {
@@ -829,6 +709,8 @@ dumpMap()
               {
                 printf("f");
               }
+              // in the cases below, if a player resides at that cell, print that player's number
+              // instead of the cell type.
               else if (celltype == CELL_TYPE_HOME2)
               {
                   if (c.playernum != 0)
@@ -973,7 +855,6 @@ main(int argc, char **argv)
     char *input;
     argv++;
     input = *(argv++);
-    //printf("%s\n", input);
     globals.in.len = strlen(input);
     strcpy(globals.in.data, input);
   }

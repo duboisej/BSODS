@@ -10,6 +10,9 @@
   #include "../lib/protocol_utils.h"
 
 // Functions here
+
+// The functions below return 1 or 0 based on whether the given 
+// x y coordinates are in the appropriate section of the maze.
 int
 isJail1Cell(int x, int y)
 {

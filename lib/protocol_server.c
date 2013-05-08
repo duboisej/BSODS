@@ -172,7 +172,6 @@
               num = Proto_Server.EventNumSubscribers;
               while (num) {
                 Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
-                printf("sending to subscriber number %d\n", num);
                 if (Proto_Server.EventSession.fd != -1) {
                   num--;
                   if (proto_session_send_msg(&Proto_Server.EventSession, 0)<0) {
@@ -279,7 +278,7 @@
             proto_session_lost_default_handler(Proto_Session *s)
             {
               fprintf(stderr, "Session lost...:\n");
-              proto_session_dump(s);
+              //proto_session_dump(s);
               return -1;
             }
 
@@ -290,7 +289,7 @@
               Proto_Msg_Hdr h;
               
               fprintf(stderr, "proto_server_mt_null_handler: invoked for session:\n");
-              proto_session_dump(s);
+              //proto_session_dump(s);
 
               // setup dummy reply header : set correct reply message type and 
               // everything else empty

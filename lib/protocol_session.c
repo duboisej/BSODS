@@ -215,7 +215,6 @@ proto_session_body_unmarshall_int(Proto_Session *s, int offset, int *v)
 extern int
 proto_session_body_marshall_cell(Proto_Session *s, Cell *c)
 {
-  printf("Got into marshall_cell\n");
   int rc;
   rc = proto_session_body_marshall_hammer(s, &(c->mjolnir));
   if (rc != -1) rc = proto_session_body_marshall_int(s, c->type);
@@ -227,7 +226,6 @@ proto_session_body_marshall_cell(Proto_Session *s, Cell *c)
 extern int
 proto_session_body_unmarshall_cell(Proto_Session *s, int offset, Cell *c)
 {
-  printf("Got into unmarshall_cell\n");
   offset = proto_session_body_unmarshall_hammer(s, offset, &(c->mjolnir));
   if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &(c->type));
   if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &(c->flag));
@@ -239,17 +237,10 @@ proto_session_body_unmarshall_cell(Proto_Session *s, int offset, Cell *c)
 extern int
 proto_session_body_marshall_hammer(Proto_Session *s, Hammer *h)
 {
-  //printf("Got into marshall_hammer\n");
   int rc = -1;
-  printf("Received hammerID = %d\n", h->hammerID);
   if (proto_session_body_marshall_int(s, h->hammerID) != -1)
   {
-    printf("Marshalled hammerID %d\n", h->hammerID);
     rc = proto_session_body_marshall_int(s, h->uses);
-    if (rc != -1)
-    {
-      printf("Marshalled %d uses\n", h->uses);
-    }
   }
   return rc;
 
@@ -258,7 +249,6 @@ proto_session_body_marshall_hammer(Proto_Session *s, Hammer *h)
 extern int
 proto_session_body_unmarshall_hammer(Proto_Session *s, int offset, Hammer *h)
 {
-  //printf("Got into unmarshall_hammer\n");
   offset = proto_session_body_unmarshall_int(s, offset, &(h->hammerID));
   if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &(h->uses));
   return offset;
@@ -267,7 +257,6 @@ proto_session_body_unmarshall_hammer(Proto_Session *s, int offset, Hammer *h)
 extern int
 proto_session_body_marshall_player(Proto_Session *s, Player *p)
 {
-  //printf("Got into marshall_player\n");
   int rc;
   rc = proto_session_body_marshall_point(s, &(p->location));
   if (rc != -1) rc = proto_session_body_marshall_hammer(s, &(p->mjolnir));
@@ -280,7 +269,6 @@ proto_session_body_marshall_player(Proto_Session *s, Player *p)
 extern int
 proto_session_body_unmarshall_player(Proto_Session *s, int offset, Player *p)
 {
-  //printf("Got into unmarshall_player\n");
   offset = proto_session_body_unmarshall_point(s, offset, &(p->location));
   if (offset != -1) offset = proto_session_body_unmarshall_hammer(s, offset, &(p->mjolnir));
   if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &(p->playernum));
@@ -292,7 +280,6 @@ proto_session_body_unmarshall_player(Proto_Session *s, int offset, Player *p)
 extern int
 proto_session_body_marshall_point(Proto_Session *s, Point *p)
 {
-  //printf("Got into marshall_point\n");
   int rc = -1;
   if (proto_session_body_marshall_int(s, p->x) != -1)
   {
@@ -304,7 +291,6 @@ proto_session_body_marshall_point(Proto_Session *s, Point *p)
 extern int
 proto_session_body_unmarshall_point(Proto_Session *s, int offset, Point *p)
 {
-  //printf("Got into unmarshall_point\n");
   offset = proto_session_body_unmarshall_int(s, offset, &(p->x));
   if (offset != -1) offset = proto_session_body_unmarshall_int(s, offset, &(p->y));
   return offset;
@@ -414,7 +400,7 @@ proto_session_rcv_msg(Proto_Session *s)
   }
 
   int newblen = ntohl(s->rhdr.blen);
-  printf("newblen = %d\n", newblen);
+  //printf("newblen = %d\n", newblen);
 
   if (newblen != 0)
   {
@@ -425,7 +411,7 @@ proto_session_rcv_msg(Proto_Session *s)
     }
     s->rlen = newblen;
   }
-  proto_session_dump(s);
+  //proto_session_dump(s);
 
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
